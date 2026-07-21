@@ -1,0 +1,205 @@
+/* index.css for Benefits Dashboard */
+
+.top-header {
+  padding: 24px;
+}
+
+.greeting {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.user-name {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-top: 4px;
+}
+
+.profile-icon {
+  position: absolute;
+  top: 60px;
+  right: 24px;
+  width: 48px;
+  height: 48px;
+  background-color: var(--bg-color);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #94a3b8;
+}
+.profile-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.match-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #eff4ff;
+  color: var(--primary-color);
+  padding: 10px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 16px;
+}
+.match-badge svg {
+  width: 16px;
+  height: 16px;
+}
+
+.categories {
+  display: flex;
+  gap: 12px;
+  padding: 0 24px;
+  margin-top: 24px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.categories::-webkit-scrollbar { display: none; }
+
+.category-pill {
+  white-space: nowrap;
+  padding: 10px 20px;
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  font-size: 14px;
+  color: var(--text-main);
+  text-decoration: none;
+  font-weight: 500;
+}
+.category-pill.active {
+  background-color: var(--primary-color);
+  color: var(--white);
+  border-color: var(--primary-color);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 32px 24px 20px 24px;
+}
+
+.section-title {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.see-all {
+  font-size: 14px;
+  color: var(--primary-color);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.benefit-card {
+  background: var(--white);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 20px;
+  margin: 0 24px 16px 24px;
+  display: flex;
+  gap: 16px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+  text-decoration: none;
+  color: inherit;
+}
+
+.card-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background-color: #f8fafc;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--primary-color);
+}
+.card-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.card-content {
+  flex: 1;
+}
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.agency {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.status-tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.status-tag svg {
+  width: 12px;
+  height: 12px;
+}
+.status-tag.eligible {
+  color: var(--success-color);
+  background-color: #ecfdf5;
+}
+.status-tag.possible {
+  color: var(--warning-color);
+  background-color: #fffbeb;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.card-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.card-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.amount {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.view-btn {
+  font-size: 13px;
+  color: var(--primary-color);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.view-btn svg {
+  width: 14px;
+  height: 14px;
+}

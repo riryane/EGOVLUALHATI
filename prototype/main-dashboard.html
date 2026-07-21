@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eGovPH Dashboard</title>
+    <link rel="stylesheet" href="assets/css/global.css">
+    <link rel="stylesheet" href="assets/css/components.css">
+    <link rel="stylesheet" href="assets/css/main-dashboard.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Status Bar -->
+        <div class="status-bar" style="padding-top: 18px;">
+            <div style="display: flex; align-items: center; gap: 4px;">
+                10:15
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"
+                    style="color: #0ea5e9; margin-left: 2px;">
+                    <path d="M21 3L3 10.53v.98l6.84 2.66L12.5 21h.96L21 3z"></path>
+                </svg>
+            </div>
+            <div class="status-icons">
+                <svg viewBox="0 0 17 11" fill="currentColor" width="16" height="10">
+                    <rect x="0" y="7.5" width="2.5" height="3" rx="1" />
+                    <rect x="4" y="5" width="2.5" height="5.5" rx="1" />
+                    <rect x="8" y="2.5" width="2.5" height="8" rx="1" />
+                    <rect x="12" y="0" width="2.5" height="10.5" rx="1" />
+                </svg>
+                <svg viewBox="0 0 16 12" fill="currentColor" width="15" height="11">
+                    <path
+                        d="M7.99996 11.5C8.69032 11.5 9.24996 10.9404 9.24996 10.25C9.24996 9.55964 8.69032 9 7.99996 9C7.30961 9 6.74996 9.55964 6.74996 10.25C6.74996 10.9404 7.30961 11.5 7.99996 11.5Z" />
+                    <path
+                        d="M11.6455 7.02701C9.62006 5.25301 6.37976 5.25301 4.35446 7.02701C4.12061 7.23192 3.76676 7.20692 3.56185 6.97306C3.35695 6.73921 3.38195 6.38536 3.6158 6.18046C6.08272 4.01917 9.91726 4.01917 12.3842 6.18046C12.618 6.38536 12.643 6.73921 12.4381 6.97306C12.2332 7.20692 11.8793 7.23192 11.6455 7.02701Z" />
+                    <path
+                        d="M15.3409 3.57144C11.2389 -0.0163351 4.76106 -0.0163351 0.658999 3.57144C0.42236 3.77843 0.398327 4.13808 0.605315 4.37472C0.812304 4.61136 1.17195 4.63539 1.40859 4.42841C5.10515 1.19472 10.8947 1.19472 14.5913 4.42841C14.828 4.63539 15.1876 4.61136 15.3946 4.37472C15.6016 4.13808 15.5775 3.77843 15.3409 3.57144Z" />
+                </svg>
+                <div
+                    style="display: flex; align-items: center; border: 1px solid currentColor; border-radius: 4px; padding: 1px 3px; font-size: 10px; line-height: 1; position: relative;">
+                    28
+                    <div
+                        style="position: absolute; right: -3px; top: 3px; width: 2px; height: 4px; background: currentColor; border-radius: 0 1px 1px 0;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-area has-bottom-nav">
+            <!-- Header -->
+            <div class="top-section">
+                <div class="header-row">
+                    <div class="logo">
+                        <img src="https://e.gov.ph/assets/dd6f1b47985922824533f2c7a056f2e417bd04ff-C-E4RX8Z.png"
+                            alt="eGovPH Logo" style="height: 32px; object-fit: contain;">
+                    </div>
+                    <div class="user-profile">
+                        <div class="user-greeting">
+                            <span class="greeting-name">Mabuhay, LUALHATI</span>
+                            <span class="greeting-sub">Welcome to eGovPH</span>
+                        </div>
+                        <div class="profile-pic"
+                            style="background-image: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4AOT-gxCM6tq8X9shPsAa6OTtSESBDJ8RUFkAfk5uv_6S8nCj7kr_mAc&s=10'); background-size: cover; background-position: center; background-color: #e2e8f0;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="date-location-row">
+                    <div class="location">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        </svg>
+                        Metro Manila
+                    </div>
+                    <div>Tue - Jul 21, 2026</div>
+                </div>
+
+                <div class="search-container">
+                    <input type="text" class="search-input" placeholder="Search Services like eTravel">
+                    <svg class="search-icon" viewBox="0 0 24 24" width="24" height="24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Services Grid -->
+            <div class="services-grid">
+                <a href="#" class="service-item">
+                    <div class="service-icon-wrapper" style="color: var(--primary-color);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect>
+                            <line x1="9" y1="22" x2="15" y2="22"></line>
+                            <line x1="8" y1="6" x2="8" y2="6.01"></line>
+                            <line x1="12" y1="6" x2="12" y2="6.01"></line>
+                            <line x1="16" y1="6" x2="16" y2="6.01"></line>
+                            <line x1="8" y1="10" x2="8" y2="10.01"></line>
+                            <line x1="12" y1="10" x2="12" y2="10.01"></line>
+                            <line x1="16" y1="10" x2="16" y2="10.01"></line>
+                            <line x1="8" y1="14" x2="8" y2="14.01"></line>
+                            <line x1="12" y1="14" x2="12" y2="14.01"></line>
+                            <line x1="16" y1="14" x2="16" y2="14.01"></line>
+                        </svg>
+                    </div>
+                    <span class="service-label">NGAs</span>
+                </a>
+
+                <a href="#" class="service-item">
+                    <div class="service-icon-wrapper" style="color: var(--primary-color);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect>
+                            <line x1="9" y1="22" x2="15" y2="22"></line>
+                            <line x1="8" y1="6" x2="8" y2="6.01"></line>
+                            <line x1="12" y1="6" x2="12" y2="6.01"></line>
+                            <line x1="16" y1="6" x2="16" y2="6.01"></line>
+                            <line x1="8" y1="10" x2="8" y2="10.01"></line>
+                            <line x1="12" y1="10" x2="12" y2="10.01" style="stroke: #f59e0b;"></line>
+                            <line x1="16" y1="10" x2="16" y2="10.01"></line>
+                            <line x1="8" y1="14" x2="8" y2="14.01"></line>
+                            <line x1="12" y1="14" x2="12" y2="14.01"></line>
+                            <line x1="16" y1="14" x2="16" y2="14.01"></line>
+                        </svg>
+                    </div>
+                    <span class="service-label">LGUs</span>
+                </a>
+
+                <a href="#" class="service-item">
+                    <div class="service-icon-wrapper" style="color: var(--primary-color);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 16c0-3.31-2.69-6-6-6s-6 2.69-6 6"></path>
+                            <path d="M12 21.01l-9-9 2-2 3.5 3.5 1-1"></path>
+                            <path d="M2 14.5l1.5-1.5"></path>
+                            <path d="M22 16h-4"></path>
+                            <path d="M14 16h-4"></path>
+                            <path d="M18 16v4"></path>
+                        </svg>
+                    </div>
+                    <span class="service-label">Travel</span>
+                </a>
+
+                <a href="#" class="service-item">
+                    <div class="service-icon-wrapper" style="color: var(--primary-color);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path
+                                d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
+                            </path>
+                            <path d="M12 15V9" style="stroke: #f59e0b;"></path>
+                            <path d="M9 12h6" style="stroke: #f59e0b;"></path>
+                        </svg>
+                    </div>
+                    <span class="service-label">Health</span>
+                </a>
+
+                <a href="#" class="service-item">
+                    <div class="service-icon-wrapper" style="color: var(--primary-color);">
+                        <span class="badge-new">New</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2">
+                            </polygon>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16" style="stroke: #f59e0b; stroke-width: 3;"></line>
+                        </svg>
+                    </div>
+                    <span class="service-label">Report</span>
+                </a>
+            </div>
+
+            <!-- Banner Carousel -->
+            <div class="banner-section">
+                <div class="banner-card" style="background-color: #f0f4ff; background-image: radial-gradient(#cbd5e1 2px, transparent 2px); background-size: 16px 16px; padding: 24px 20px; z-index: 1;">
+                    <div style="display: flex; align-items: baseline; font-weight: 800; font-size: 24px; color: #000; position: relative; margin-bottom: 8px; z-index: 2;">
+                        eTr
+                        <div style="position: relative; display: inline-flex; justify-content: center; width: 14px; margin: 0 1px;">
+                            <svg viewBox="0 0 24 24" fill="#dc2626" width="16" height="16" style="margin-top: auto;">
+                                <path d="M12 2L2 22h20L12 2z"></path>
+                            </svg>
+                            <svg viewBox="0 0 24 24" fill="#2563eb" width="18" height="18" style="position: absolute; top: -14px; right: -12px; transform: rotate(45deg);">
+                                <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"></path>
+                            </svg>
+                        </div>
+                        <span style="margin-left: 2px;">vel</span>
+                    </div>
+                    <div class="banner-title" style="max-width: 60%; font-size: 14px; font-weight: 700; color: #0f172a; z-index: 2; position: relative;">
+                        Philippine Travel<br>Information System
+                    </div>
+                    
+                    <div style="position: absolute; right: -10px; bottom: -10px; width: 60%; height: 120%; background-image: url('assets/img/etravel_banner.png'); background-size: cover; background-position: center; border-radius: 40px 0 0 40px; mask-image: linear-gradient(to right, transparent, black 30%); -webkit-mask-image: linear-gradient(to right, transparent, black 30%); z-index: 1; mix-blend-mode: darken;">
+                    </div>
+                </div>
+                <div class="carousel-dots">
+                    <div class="dot active"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
+            </div>
+
+            <!-- Bottom Widgets -->
+            <div class="widgets-grid">
+                <div class="widget widget-weather">
+                    <div class="weather-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48"
+                            height="48">
+                            <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
+                            <path d="M12 10v4"></path>
+                            <path d="M12 16v.01" style="stroke-width: 3; stroke: #ef4444;"></path>
+                            <path d="M12 10l3 6H9l3-6z"
+                                style="stroke: var(--primary-color); stroke-width: 2; fill: none;"></path>
+                        </svg>
+                    </div>
+                    <div class="weather-temp">-°C</div>
+                    <div class="weather-desc">Loading Weather Forecast...</div>
+                </div>
+
+                <a href="index.html" class="widget widget-trabaho" style="text-decoration: none; position: relative; overflow: hidden; padding: 16px; min-height: 80px;">
+                    <div class="widget-trabaho-title" style="position: relative; z-index: 2;">eTulong</div>
+                    <img src="assets/img/etulong.png" alt="eTulong" style="position: absolute; right: 0; top: 0; height: 100%; object-fit: contain; object-position: right; z-index: 1;">
+                </a>
+
+                <div class="widget widget-ai">
+                    <div class="widget-ai-title">eGov AI</div>
+                    <svg style="position: absolute; right: -10px; bottom: 0; opacity: 0.3;" viewBox="0 0 24 24"
+                        width="60" height="60" fill="none" stroke="#15803d" stroke-width="1">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                        <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                        <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <div class="dash-bottom-nav">
+            <a href="#" class="dash-nav-item active">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                </svg>
+                Home
+            </a>
+            <a href="#" class="dash-nav-item">
+                <svg viewBox="0 0 24 24">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <path d="M7 7h.01"></path>
+                    <path d="M17 7h.01"></path>
+                    <path d="M7 17h.01"></path>
+                    <path d="M17 17h.01"></path>
+                    <path d="M7 12h10"></path>
+                    <path d="M12 7v10"></path>
+                </svg>
+                Scan
+            </a>
+
+            <div class="nav-center">
+                <div class="center-btn-wrapper">
+                    <div class="center-btn">
+                        <svg viewBox="0 0 24 24">
+                            <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+                            <path d="M8 10h.01"></path>
+                            <path d="M12 10h4"></path>
+                            <path d="M12 14h4"></path>
+                        </svg>
+                    </div>
+                    <span class="center-label">Digital ID</span>
+                </div>
+            </div>
+
+            <a href="index.html" class="dash-nav-item">
+                <svg viewBox="0 0 24 24">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+                History
+            </a>
+            <a href="#" class="dash-nav-item">
+                <svg viewBox="0 0 24 24">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                Account
+            </a>
+        </div>
+    </div>
+</body>
+
+</html>

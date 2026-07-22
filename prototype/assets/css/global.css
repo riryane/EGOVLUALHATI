@@ -71,9 +71,11 @@ body {
 
 .content-area {
   flex: 1;
+  min-height: 0; /* required for overflow scrolling inside a flex column */
   overflow-y: auto;
   position: relative;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 .content-area::-webkit-scrollbar {
   display: none;

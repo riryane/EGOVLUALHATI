@@ -9,6 +9,12 @@
     <link rel="stylesheet" href="assets/css/details.css">
 </head>
 <body>
+    <script type="module">
+        // Auth guard: no session, no access.
+        import { requireSession } from './assets/js/session.js';
+        requireSession();
+    </script>
+
     <div class="app-container">
         <div class="status-bar" style="padding-top: 18px;">
             <div style="display: flex; align-items: center; gap: 4px;">
@@ -51,51 +57,8 @@
         </div>
 
         <div class="content-area has-action">
-            <div class="blue-card">
-                <div class="blue-card-top">
-                    <span class="type-tag" style="background: rgba(255,255,255,0.2);">
-                        Cash Transfer
-                    </span>
-                    <span class="agency-text">DSWD</span>
-                </div>
-                <div class="blue-card-title">4Ps Pantawid Pamilyang Pilipino Program</div>
-                
-                <div class="amount-box" style="margin-top: 24px;">
-                    <div class="amount-label">Amount available:</div>
-                    <div class="amount-value">Up to PHP 3,000 / month</div>
-                </div>
-            </div>
-
-            <div class="eligibility-section">
-                <div class="section-title">Your eligibility</div>
-                
-                <div class="status-card">
-                    <div class="status-card-header">
-                        <div class="status-icon possible">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                        </div>
-                        <div>
-                            <div class="status-title">Possibly Eligible</div>
-                            <div class="status-desc">You meet 2 out of 3 requirements. Complete the rest to apply.</div>
-                        </div>
-                    </div>
-                    
-                    <div class="requirement-list">
-                        <div class="requirement-item">
-                            <div class="requirement-icon">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            </div>
-                            <div class="requirement-text">Income below threshold (PHP 12,000)</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        <div class="action-bottom">
-            <a href="document-requirements.html" class="btn-primary">
-                Apply Now
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" width="18" height="18"><polyline points="9 18 15 12 9 6"></polyline></svg>
-            </a>
-        </div>
+            <div id="detail-root"></div>
+            <div class="action-bottom" id="detail-action"></div>
         </div>
 <div class="dash-bottom-nav">
             <a href="main-dashboard.html" class="dash-nav-item">
@@ -106,19 +69,17 @@
             </a>
             <a href="#" class="dash-nav-item">
                 <svg viewBox="0 0 24 24">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                    <path d="M7 7h.01"></path>
-                    <path d="M17 7h.01"></path>
-                    <path d="M7 17h.01"></path>
-                    <path d="M17 17h.01"></path>
-                    <path d="M7 12h10"></path>
-                    <path d="M12 7v10"></path>
+                    <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
+                    <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
+                    <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
+                    <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
+                    <rect x="8" y="8" width="8" height="8" rx="2"></rect>
                 </svg>
                 Scan
             </a>
 
             <div class="nav-center">
-                <div class="center-btn-wrapper">
+                <a href="digital-id.html" class="center-btn-wrapper" style="text-decoration: none;">
                     <div class="center-btn">
                         <svg viewBox="0 0 24 24">
                             <rect x="3" y="5" width="18" height="14" rx="2"></rect>
@@ -128,29 +89,128 @@
                         </svg>
                     </div>
                     <span class="center-label">Digital ID</span>
-                </div>
+                </a>
             </div>
 
-            <a href="index.html" class="dash-nav-item">
+            <a href="transactions.html" class="dash-nav-item">
                 <svg viewBox="0 0 24 24">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
-                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                    <polyline points="10 9 9 9 8 9"></polyline>
+                    <path d="M18 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8l6 6v10a2 2 0 0 1-2 2z"></path>
+                    <rect x="8.5" y="12" width="7" height="5" rx="1"></rect>
                 </svg>
                 History
             </a>
-            <a href="#" class="dash-nav-item">
+            <a href="profile.html" class="dash-nav-item">
                 <svg viewBox="0 0 24 24">
-                    <rect x="3" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="14" width="7" height="7"></rect>
-                    <rect x="3" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="3" width="8" height="8" rx="2"></rect>
+                    <rect x="13" y="3" width="8" height="8" rx="2"></rect>
+                    <rect x="13" y="13" width="8" height="8" rx="2"></rect>
+                    <rect x="3" y="13" width="8" height="8" rx="2"></rect>
                 </svg>
                 Account
             </a>
         </div>
     </div>
+
+    <script type="module">
+        import { supabase } from './assets/js/supabase-client.js';
+
+        const rootEl = document.getElementById('detail-root');
+        const actionEl = document.getElementById('detail-action');
+
+        const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) =>
+            ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+        const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+        const CROSS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+
+        const id = new URLSearchParams(location.search).get('id');
+        if (!id) {
+            rootEl.innerHTML = '<p style="padding:24px;">No benefit selected.</p>';
+        } else {
+            const { data: r, error } = await supabase
+                .from('assistance').select('*').eq('id', id).single();
+
+            if (error || !r) {
+                console.error('Failed to load benefit', error);
+                rootEl.innerHTML = '<p style="padding:24px;">Benefit not found.</p>';
+            } else {
+                const isEligible = r.eligibility_status === 'eligible';
+
+                const blueCardBody = `
+                    ${r.subtitle ? `<div class="blue-card-subtitle">${esc(r.subtitle)}</div>` : ''}
+                    ${r.amount_label ? `
+                    <div class="amount-box" style="margin-top: 24px;">
+                        <div class="amount-label">Amount available:</div>
+                        <div class="amount-value">${esc(r.amount_label)}</div>
+                    </div>` : ''}
+                    <div class="info-box">
+                        <div class="info-box-title">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                            Claimed via Pick-up
+                        </div>
+                        <div class="info-box-desc">
+                            This benefit is claimed in person at the designated distribution point. Bring your Digital ID when claiming.
+                        </div>
+                    </div>`;
+
+                const requirements = (r.requirements || []).map((req) => `
+                    <div class="requirement-item">
+                        <div class="requirement-icon"${req.met ? '' : ' style="color:#ef4444;"'}>
+                            ${req.met ? CHECK : CROSS}
+                        </div>
+                        <div class="requirement-text">${esc(req.text)}</div>
+                    </div>`).join('');
+
+                rootEl.innerHTML = `
+                    <div class="blue-card">
+                        <div class="blue-card-top">
+                            <span class="type-tag" style="background: rgba(255,255,255,0.2);">${esc(r.assistance_type)}</span>
+                            <span class="agency-text">${esc(r.agency)}</span>
+                        </div>
+                        <div class="blue-card-title">${esc(r.program_name)}</div>
+                        ${blueCardBody}
+                    </div>
+
+                    <div class="eligibility-section">
+                        <div class="section-title">Your eligibility</div>
+                        <div class="status-card">
+                            <div class="status-card-header">
+                                <div class="status-icon ${isEligible ? 'eligible' : 'possible'}">
+                                    ${isEligible
+                                        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>'
+                                        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>'}
+                                </div>
+                                <div>
+                                    <div class="status-title">${esc(r.eligibility_title)}</div>
+                                    <div class="status-desc">${esc(r.eligibility_desc)}</div>
+                                </div>
+                            </div>
+                            <div class="requirement-list">${requirements}</div>
+                        </div>
+                    </div>`;
+
+                if (r.primary_action === 'Apply Now' && !isEligible) {
+                    // Possibly eligible only — application is locked.
+                    actionEl.innerHTML = `
+                        <div style="text-align: center; font-size: 13px; color: #64748b; margin-bottom: 10px;">
+                            You don't meet all the requirements yet. Complete them to unlock the application.
+                        </div>
+                        <span class="btn-primary" style="background: #cbd5e1; color: #64748b; cursor: not-allowed;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                            Not Yet Eligible to Apply
+                        </span>`;
+                } else {
+                    const actionHref = r.primary_action === 'Apply Now'
+                        ? `document-requirements.html?id=${encodeURIComponent(r.id)}`
+                        : '#';
+                    actionEl.innerHTML = `
+                        <a href="${actionHref}" class="btn-primary">
+                            ${esc(r.primary_action)}
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" width="18" height="18"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </a>`;
+                }
+            }
+        }
+    </script>
 </body>
 </html>

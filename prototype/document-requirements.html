@@ -9,6 +9,12 @@
     <link rel="stylesheet" href="assets/css/documents.css">
 </head>
 <body>
+    <script type="module">
+        // Auth guard: no session, no access.
+        import { requireSession } from './assets/js/session.js';
+        requireSession();
+    </script>
+
     <div class="app-container">
         <div class="status-bar" style="padding-top: 18px;">
             <div style="display: flex; align-items: center; gap: 4px;">
@@ -44,7 +50,7 @@
         </div>
 
         <div class="page-header" style="justify-content: space-between;">
-            <a href="details-4ps.html" class="back-btn">
+            <a href="index.html" class="back-btn" id="back-link">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
             </a>
             <div class="page-title" style="margin-right: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.5px; color: var(--text-secondary);">STEP 2 OF 3</div>
@@ -58,9 +64,16 @@
         </div>
 
         <div class="content-area has-action">
-            <div class="doc-header">
-                <div class="doc-title">Required Documents</div>
-                <div class="doc-subtitle">Required documents were automatically retrieved from your eGov account.</div>
+            <div class="doc-header" style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;">
+                <div>
+                    <div class="doc-title">Required Documents</div>
+                    <div class="doc-subtitle">Required documents were automatically retrieved from your eGov account.</div>
+                </div>
+                <button id="reset-captures" title="Clear captured documents"
+                    style="flex-shrink: 0; display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--border-color); background: #fff; color: #64748b; font-family: inherit; font-size: 11.5px; font-weight: 700; padding: 7px 10px; border-radius: 16px; cursor: pointer;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                    Reset
+                </button>
             </div>
 
             <div class="notice-banner">
@@ -72,95 +85,37 @@
                 </div>
             </div>
 
-            <div class="doc-list">
-                <div class="doc-card">
-                    <div class="doc-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                    </div>
-                    <div class="doc-info">
-                        <div class="doc-name">PSA Birth Certificate</div>
-                        <div class="doc-status">
-                            <span class="doc-status-verified">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10"></circle><polyline points="16 10 10 16 7 13"></polyline></svg>
-                                Verified
-                            </span>
-                            • 
-                            <span>
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                                from eGov
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="doc-card">
-                    <div class="doc-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                    </div>
-                    <div class="doc-info">
-                        <div class="doc-name">National ID (PhilSys)</div>
-                        <div class="doc-status">
-                            <span class="doc-status-verified">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10"></circle><polyline points="16 10 10 16 7 13"></polyline></svg>
-                                Verified
-                            </span>
-                            • 
-                            <span>
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                                from PhilSys
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="doc-card">
-                    <div class="doc-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                    </div>
-                    <div class="doc-info">
-                        <div class="doc-name">SSS Employment Record</div>
-                        <div class="doc-status">
-                            <span class="doc-status-verified">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10"></circle><polyline points="16 10 10 16 7 13"></polyline></svg>
-                                Verified
-                            </span>
-                            • 
-                            <span>
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                                from SSS
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-            <a href="camera.html" style="text-decoration: none; color: inherit; display: block; margin-bottom: 16px;">
-                <div class="doc-card">
-                    <div class="doc-icon" style="color: #64748b; background-color: #f1f5f9;">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                    </div>
-                    <div class="doc-info">
-                        <div class="doc-name">Proof of Billing / Barangay Certificate</div>
-                        <div class="doc-status">
-                            <span style="color: #ef4444; display: inline-flex; align-items: center; gap: 4px;">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" width="12" height="12"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                                Not Verified
-                            </span>
-                            • 
-                            <span style="color: #3b82f6; font-weight: 600;">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12" style="margin-right: 2px; vertical-align: -1px;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>Tap to Capture
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </a>
-            </div>
+            <div class="doc-list" id="doc-list"></div>
         <div class="action-bottom" style="background: transparent;">
-            <a href="#" class="btn-primary" style="margin-bottom: 8px;">
+            <a href="#" class="btn-primary" style="margin-bottom: 8px;" id="next-btn">
                 Next
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" width="18" height="18"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </a>
             </div>
         </div>
+
+        <!-- Missing documents modal -->
+        <div id="missing-modal" style="position: absolute; inset: 0; background: rgba(15, 23, 42, 0.55); z-index: 60; display: none; align-items: flex-end;">
+            <div style="background: #fff; width: 100%; border-radius: 24px 24px 0 0; padding: 24px 24px 36px; animation: modal-up 0.25s ease;">
+                <div style="width: 40px; height: 4px; background: #e2e8f0; border-radius: 2px; margin: 0 auto 20px;"></div>
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                    <div style="width: 44px; height: 44px; border-radius: 50%; background: #fffbeb; color: #f59e0b; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    </div>
+                    <div style="font-size: 18px; font-weight: 800; color: #0f172a;">Missing Documents</div>
+                </div>
+                <div style="font-size: 14px; color: #64748b; margin-bottom: 16px; line-height: 1.5;">
+                    Capture the following before proceeding to face verification:
+                </div>
+                <div id="missing-list" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px;"></div>
+                <button id="missing-capture-btn" class="btn-primary" style="border: none; width: 100%; font-family: inherit; font-size: 15px; cursor: pointer;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                    Capture Now
+                </button>
+                <button id="missing-close-btn" style="display: block; width: 100%; background: none; border: none; margin-top: 14px; font-family: inherit; font-size: 14px; font-weight: 700; color: #64748b; cursor: pointer;">Not now</button>
+            </div>
+        </div>
+        <style>@keyframes modal-up { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }</style>
 <div class="dash-bottom-nav">
             <a href="main-dashboard.html" class="dash-nav-item">
                 <svg viewBox="0 0 24 24" fill="currentColor">
@@ -170,19 +125,17 @@
             </a>
             <a href="#" class="dash-nav-item">
                 <svg viewBox="0 0 24 24">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                    <path d="M7 7h.01"></path>
-                    <path d="M17 7h.01"></path>
-                    <path d="M7 17h.01"></path>
-                    <path d="M17 17h.01"></path>
-                    <path d="M7 12h10"></path>
-                    <path d="M12 7v10"></path>
+                    <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
+                    <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
+                    <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
+                    <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
+                    <rect x="8" y="8" width="8" height="8" rx="2"></rect>
                 </svg>
                 Scan
             </a>
 
             <div class="nav-center">
-                <div class="center-btn-wrapper">
+                <a href="digital-id.html" class="center-btn-wrapper" style="text-decoration: none;">
                     <div class="center-btn">
                         <svg viewBox="0 0 24 24">
                             <rect x="3" y="5" width="18" height="14" rx="2"></rect>
@@ -192,29 +145,146 @@
                         </svg>
                     </div>
                     <span class="center-label">Digital ID</span>
-                </div>
+                </a>
             </div>
 
-            <a href="index.html" class="dash-nav-item">
+            <a href="transactions.html" class="dash-nav-item">
                 <svg viewBox="0 0 24 24">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
-                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                    <polyline points="10 9 9 9 8 9"></polyline>
+                    <path d="M18 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8l6 6v10a2 2 0 0 1-2 2z"></path>
+                    <rect x="8.5" y="12" width="7" height="5" rx="1"></rect>
                 </svg>
                 History
             </a>
-            <a href="#" class="dash-nav-item">
+            <a href="profile.html" class="dash-nav-item">
                 <svg viewBox="0 0 24 24">
-                    <rect x="3" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="14" width="7" height="7"></rect>
-                    <rect x="3" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="3" width="8" height="8" rx="2"></rect>
+                    <rect x="13" y="3" width="8" height="8" rx="2"></rect>
+                    <rect x="13" y="13" width="8" height="8" rx="2"></rect>
+                    <rect x="3" y="13" width="8" height="8" rx="2"></rect>
                 </svg>
                 Account
             </a>
         </div>
     </div>
+
+    <script type="module">
+        // Per-ayuda document requirements, loaded from the assistance row.
+        // Captured docs are tracked per program: captured_<assistanceId>_<docIndex>.
+        import { supabase } from './assets/js/supabase-client.js';
+        import { clearCapturedDocs } from './assets/js/session.js';
+
+        const listEl = document.getElementById('doc-list');
+        const nextBtn = document.getElementById('next-btn');
+
+        document.getElementById('reset-captures').addEventListener('click', () => {
+            clearCapturedDocs();
+            render();
+        });
+
+        const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) =>
+            ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+        const DOC_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>';
+        const CHECK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10"></circle><polyline points="16 10 10 16 7 13"></polyline></svg>';
+        const DOWNLOAD_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>';
+        const CAMERA_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12" style="margin-right: 2px; vertical-align: -1px;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>';
+        const CROSS_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" width="12" height="12"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+
+        const ayudaId = new URLSearchParams(location.search).get('id');
+        // Captured docs are keyed by document NAME, so a document verified for
+        // one ayuda counts for every other ayuda that requires the same one.
+        const capturedKey = (doc) => `captured_doc_${doc.name.toLowerCase().replace(/[^a-z0-9]+/g, '_')}`;
+        let docs = [];
+
+        document.getElementById('back-link').href = ayudaId ? `details.html?id=${encodeURIComponent(ayudaId)}` : 'index.html';
+
+        function docReady(doc) {
+            return doc.verified || localStorage.getItem(capturedKey(doc)) === '1';
+        }
+
+        function render() {
+            listEl.innerHTML = docs.map((doc) => {
+                const captured = !doc.verified && localStorage.getItem(capturedKey(doc)) === '1';
+                if (doc.verified || captured) {
+                    return `
+                    <div class="doc-card">
+                        <div class="doc-icon">${DOC_ICON}</div>
+                        <div class="doc-info">
+                            <div class="doc-name">${esc(doc.name)}</div>
+                            <div class="doc-status">
+                                <span class="doc-status-verified">${CHECK_ICON} Verified</span>
+                                •
+                                <span>${captured ? CAMERA_ICON + ' from Camera' : DOWNLOAD_ICON + ' from ' + esc(doc.source || 'eGov')}</span>
+                            </div>
+                        </div>
+                    </div>`;
+                }
+                return `
+                <a href="camera.html?id=${encodeURIComponent(ayudaId)}&name=${encodeURIComponent(doc.name)}" style="text-decoration: none; color: inherit; display: block; margin-bottom: 16px;">
+                    <div class="doc-card">
+                        <div class="doc-icon" style="color: #64748b; background-color: #f1f5f9;">${DOC_ICON}</div>
+                        <div class="doc-info">
+                            <div class="doc-name">${esc(doc.name)}</div>
+                            <div class="doc-status">
+                                <span style="color: #ef4444; display: inline-flex; align-items: center; gap: 4px;">${CROSS_ICON} Not Verified</span>
+                                •
+                                <span style="color: #3b82f6; font-weight: 600;">${CAMERA_ICON}Tap to Capture</span>
+                            </div>
+                        </div>
+                    </div>
+                </a>`;
+            }).join('') || '<p style="padding: 8px 24px; color: #64748b;">No documents required for this program.</p>';
+        }
+
+        if (!ayudaId) {
+            listEl.innerHTML = '<p style="padding: 8px 24px; color: #64748b;">No program selected. Go back and choose a benefit.</p>';
+        } else {
+            const { data: ayuda, error } = await supabase
+                .from('assistance').select('program_name, documents, eligibility_status').eq('id', ayudaId).single();
+            if (error || !ayuda) {
+                console.error(error);
+                listEl.innerHTML = '<p style="padding: 8px 24px; color: #64748b;">Could not load requirements.</p>';
+            } else if (ayuda.eligibility_status !== 'eligible') {
+                // Deep-link guard: possibly-eligible programs can't be applied to.
+                window.location.replace(`details.html?id=${encodeURIComponent(ayudaId)}`);
+            } else {
+                docs = ayuda.documents || [];
+                document.querySelector('.doc-subtitle').textContent =
+                    `Requirements for ${ayuda.program_name}. Documents on file were retrieved from your eGov account.`;
+                render();
+            }
+        }
+
+        const modal = document.getElementById('missing-modal');
+        const missingList = document.getElementById('missing-list');
+
+        function showMissingModal(missing) {
+            missingList.innerHTML = missing.map(m => `
+                <div style="display: flex; align-items: center; gap: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 14px;">
+                    <span style="color: #ef4444; display: flex;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </span>
+                    <span style="font-size: 14px; font-weight: 600; color: #0f172a;">${esc(m.doc.name)}</span>
+                </div>`).join('');
+            document.getElementById('missing-capture-btn').onclick = () => {
+                const first = missing[0];
+                window.location.href = `camera.html?id=${encodeURIComponent(ayudaId)}&name=${encodeURIComponent(first.doc.name)}`;
+            };
+            modal.style.display = 'flex';
+        }
+
+        document.getElementById('missing-close-btn').addEventListener('click', () => modal.style.display = 'none');
+        modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
+
+        nextBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const missing = docs.map((doc, index) => ({ doc, index })).filter(m => !docReady(m.doc));
+            if (missing.length) {
+                showMissingModal(missing);
+            } else {
+                window.location.href = `face-liveness.html?v=2&id=${encodeURIComponent(ayudaId)}`;
+            }
+        });
+    </script>
 </body>
 </html>

@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Information</title>
+    <link rel="stylesheet" href="assets/css/global.css">
+    <link rel="stylesheet" href="assets/css/components.css">
+    <style>
+        .profile-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+        }
+        .profile-header .hdr-btn {
+            color: #1a1a1a;
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+        .profile-header .hdr-title {
+            font-size: 19px;
+            font-weight: 800;
+            color: #1a1a1a;
+        }
+
+        .profile-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 40px;
+        }
+
+        .avatar-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 18px;
+        }
+        .avatar-lg {
+            width: 148px;
+            height: 148px;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            background-color: #e2e8f0;
+        }
+        .chip-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 14px;
+            background: #eef2f7;
+            color: #1d4ed8;
+            font-size: 15px;
+            font-weight: 700;
+            padding: 8px 16px;
+            border-radius: 999px;
+            text-decoration: none;
+        }
+        .chip-btn svg { width: 15px; height: 15px; }
+
+        .profile-name {
+            text-align: center;
+            font-size: 24px;
+            font-weight: 800;
+            color: #374151;
+            text-transform: uppercase;
+            margin: 20px 32px 0;
+            line-height: 1.25;
+        }
+        .profile-email {
+            text-align: center;
+            font-size: 16px;
+            font-weight: 600;
+            color: #6b7280;
+            margin-top: 10px;
+        }
+
+        .profile-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 26px;
+            padding: 0 16px;
+        }
+        .profile-tab {
+            font-size: 17px;
+            font-weight: 700;
+            color: #374151;
+            text-decoration: none;
+            padding: 10px 14px 12px;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            background: none;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+            font-family: inherit;
+        }
+        .profile-tab.active {
+            color: #1d4ed8;
+            border-bottom-color: #1d4ed8;
+        }
+
+        .tab-panel { padding: 10px 24px 0; }
+        .hidden { display: none !important; }
+
+        .panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 22px 0 6px;
+        }
+        .panel-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: #1f2937;
+        }
+
+        .group-title {
+            font-size: 19px;
+            font-weight: 800;
+            color: #1f2937;
+            margin-top: 22px;
+        }
+
+        .field {
+            padding: 16px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .field-label {
+            font-size: 14.5px;
+            font-weight: 600;
+            color: #6b7280;
+        }
+        .field-value {
+            font-size: 17px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-top: 8px;
+            line-height: 1.4;
+        }
+        .field .chip-btn { margin-top: 12px; }
+    </style>
+</head>
+<body>
+    <script type="module">
+        // Auth guard: no session, no access.
+        import { requireSession } from './assets/js/session.js';
+        requireSession();
+    </script>
+
+    <div class="app-container">
+        <div class="status-bar" style="padding-top: 18px;">
+            <div style="display: flex; align-items: center; gap: 4px;">
+                10:15
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"
+                    style="color: #0ea5e9; margin-left: 2px;">
+                    <path d="M21 3L3 10.53v.98l6.84 2.66L12.5 21h.96L21 3z"></path>
+                </svg>
+            </div>
+            <div class="status-icons">
+                <svg viewBox="0 0 17 11" fill="currentColor" width="16" height="10">
+                    <rect x="0" y="7.5" width="2.5" height="3" rx="1" />
+                    <rect x="4" y="5" width="2.5" height="5.5" rx="1" />
+                    <rect x="8" y="2.5" width="2.5" height="8" rx="1" />
+                    <rect x="12" y="0" width="2.5" height="10.5" rx="1" />
+                </svg>
+                <svg viewBox="0 0 16 12" fill="currentColor" width="15" height="11">
+                    <path d="M7.99996 11.5C8.69032 11.5 9.24996 10.9404 9.24996 10.25C9.24996 9.55964 8.69032 9 7.99996 9C7.30961 9 6.74996 9.55964 6.74996 10.25C6.74996 10.9404 7.30961 11.5 7.99996 11.5Z" />
+                    <path d="M11.6455 7.02701C9.62006 5.25301 6.37976 5.25301 4.35446 7.02701C4.12061 7.23192 3.76676 7.20692 3.56185 6.97306C3.35695 6.73921 3.38195 6.38536 3.6158 6.18046C6.08272 4.01917 9.91726 4.01917 12.3842 6.18046C12.618 6.38536 12.643 6.73921 12.4381 6.97306C12.2332 7.20692 11.8793 7.23192 11.6455 7.02701Z" />
+                    <path d="M15.3409 3.57144C11.2389 -0.0163351 4.76106 -0.0163351 0.658999 3.57144C0.42236 3.77843 0.398327 4.13808 0.605315 4.37472C0.812304 4.61136 1.17195 4.63539 1.40859 4.42841C5.10515 1.19472 10.8947 1.19472 14.5913 4.42841C14.828 4.63539 15.1876 4.61136 15.3946 4.37472C15.6016 4.13808 15.5775 3.77843 15.3409 3.57144Z" />
+                </svg>
+                <div style="display: flex; align-items: center; border: 1px solid currentColor; border-radius: 4px; padding: 1px 3px; font-size: 10px; line-height: 1; position: relative;">
+                    28
+                    <div style="position: absolute; right: -3px; top: 3px; width: 2px; height: 4px; background: currentColor; border-radius: 0 1px 1px 0;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="profile-header">
+            <a href="main-dashboard.html" class="hdr-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" width="24" height="24"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </a>
+            <div class="hdr-title">Personal Information</div>
+            <a href="main-dashboard.html" class="hdr-btn">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="26" height="26"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+            </a>
+        </div>
+
+        <div class="profile-scroll">
+            <div class="avatar-wrap">
+                <div class="avatar-lg" id="profile-avatar"></div>
+                <a href="#" class="chip-btn">
+                    Change Photo
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                </a>
+            </div>
+
+            <div class="profile-name" id="profile-name">—</div>
+            <div class="profile-email" id="profile-email">—</div>
+
+            <div class="profile-tabs">
+                <button class="profile-tab active" id="tab-personal">Personal Information</button>
+                <button class="profile-tab" id="tab-other">Other information</button>
+            </div>
+
+            <!-- ============ Personal Information tab ============ -->
+            <div class="tab-panel" id="panel-personal">
+                <div class="field">
+                    <div class="field-label">Date of birth</div>
+                    <div class="field-value" id="f-dob">—</div>
+                </div>
+                <div class="field">
+                    <div class="field-label">Citizenship</div>
+                    <div class="field-value" id="f-citizenship">—</div>
+                </div>
+                <div class="field">
+                    <div class="field-label">Phone number</div>
+                    <div class="field-value" id="f-phone">—</div>
+                </div>
+                <div class="field">
+                    <div class="field-label">Email</div>
+                    <div class="field-value" id="f-email">—</div>
+                    <a href="#" class="chip-btn">
+                        Change Email
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    </a>
+                </div>
+                <div class="field" style="border-bottom: none;">
+                    <div class="field-label">Current Address</div>
+                    <div class="field-value" id="f-address" style="text-transform: uppercase;">—</div>
+                    <a href="#" class="chip-btn">
+                        Change Address
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    </a>
+                </div>
+            </div>
+
+            <!-- ============ Other information tab ============ -->
+            <div class="tab-panel hidden" id="panel-other">
+                <div class="panel-head">
+                    <div class="panel-title">Other Information</div>
+                    <a href="#" class="chip-btn" style="margin-top: 0;">
+                        Edit
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    </a>
+                </div>
+
+                <div class="group-title">Health Data</div>
+                <div class="field">
+                    <div class="field-label">Weight (kg)</div>
+                    <div class="field-value" id="f-weight">—</div>
+                </div>
+                <div class="field">
+                    <div class="field-label">Height (cm)</div>
+                    <div class="field-value" id="f-height">—</div>
+                </div>
+                <div class="field">
+                    <div class="field-label">Eyes Color</div>
+                    <div class="field-value" id="f-eyes">—</div>
+                </div>
+                <div class="field">
+                    <div class="field-label">Complexion</div>
+                    <div class="field-value" id="f-complexion" style="text-transform: uppercase;">—</div>
+                </div>
+
+                <div class="group-title">Birth Place</div>
+                <div class="field">
+                    <div class="field-label">Birth Country</div>
+                    <div class="field-value" id="f-birth-country">—</div>
+                </div>
+                <div class="field">
+                    <div class="field-label">Birth Province</div>
+                    <div class="field-value" id="f-birth-province" style="text-transform: uppercase;">—</div>
+                </div>
+                <div class="field">
+                    <div class="field-label">Birth Municipality</div>
+                    <div class="field-value" id="f-birth-municipality" style="text-transform: uppercase;">—</div>
+                </div>
+
+                <div class="group-title">Other Details (NA if not applicable)</div>
+                <div class="field" style="border-bottom: none;">
+                    <div class="field-label">Marital Status</div>
+                    <div class="field-value" id="f-marital">—</div>
+                </div>
+            </div>
+
+            <div style="padding: 28px 24px 12px;">
+                <button id="btn-logout" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; border: 1.5px solid #ef4444; background: #fff; color: #ef4444; font-size: 17px; font-weight: 700; font-family: inherit; padding: 16px; border-radius: 14px; cursor: pointer;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    Log Out
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Profile data comes from the session (populated by eGov SSO at login) —
+        // no users-table fetch here.
+        import { logout, currentProfile } from './assets/js/session.js';
+
+        document.getElementById('btn-logout').addEventListener('click', logout);
+
+        // Tabs
+        const tabPersonal = document.getElementById('tab-personal');
+        const tabOther = document.getElementById('tab-other');
+        const panelPersonal = document.getElementById('panel-personal');
+        const panelOther = document.getElementById('panel-other');
+
+        tabPersonal.addEventListener('click', () => {
+            tabPersonal.classList.add('active');
+            tabOther.classList.remove('active');
+            panelPersonal.classList.remove('hidden');
+            panelOther.classList.add('hidden');
+        });
+        tabOther.addEventListener('click', () => {
+            tabOther.classList.add('active');
+            tabPersonal.classList.remove('active');
+            panelOther.classList.remove('hidden');
+            panelPersonal.classList.add('hidden');
+        });
+
+        // Data
+        const set = (id, v) => { document.getElementById(id).textContent = v ?? '—'; };
+        const fmtDate = (d) => d
+            ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+            : '—';
+
+        const u = currentProfile();
+        if (!u) {
+            console.error('No profile in session');
+        } else {
+            set('profile-name', u.full_name);
+            set('profile-email', u.email);
+            if (u.avatar_url) {
+                document.getElementById('profile-avatar').style.backgroundImage = `url('${u.avatar_url}')`;
+            }
+
+            set('f-dob', fmtDate(u.date_of_birth));
+            set('f-citizenship', u.citizenship);
+            set('f-phone', u.phone);
+            set('f-email', u.email);
+            set('f-address', u.address);
+
+            set('f-weight', u.weight_kg);
+            set('f-height', u.height_cm);
+            set('f-eyes', u.eyes_color);
+            set('f-complexion', u.complexion);
+            set('f-birth-country', u.birth_country);
+            set('f-birth-province', u.birth_province);
+            set('f-birth-municipality', u.birth_municipality);
+            set('f-marital', u.marital_status);
+        }
+    </script>
+</body>
+</html>

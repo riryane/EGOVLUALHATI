@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>eGovPH - Face Verification</title>
+    <link rel="stylesheet" href="assets/css/global.css">
+    <style>
+        .app-container.cam {
+            background-color: #000;
+            color: var(--white);
+        }
+
+        .liveness-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 20px;
+            z-index: 10;
+        }
+        .liveness-header .back-btn {
+            color: var(--white);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+        .step-label {
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: #94a3b8;
+        }
+
+        .viewfinder-container {
+            flex: 1;
+            min-height: 0;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .camera-feed {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: linear-gradient(135deg, #333 0%, #111 100%);
+            transform: scaleX(-1); /* mirror selfie view */
+            z-index: 0;
+        }
+
+        /* Oval face cutout */
+        .face-frame {
+            position: relative;
+            z-index: 2;
+            width: 68%;
+            aspect-ratio: 0.78;
+            border: 3px solid rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.65);
+            transition: border-color 0.4s;
+        }
+        .face-frame.scanning { border-color: #3b82f6; }
+        .face-frame.success { border-color: #10b981; }
+
+        .instruction {
+            position: absolute;
+            bottom: 10%;
+            width: 100%;
+            text-align: center;
+            z-index: 5;
+            padding: 0 24px;
+        }
+        .instruction-title { font-size: 17px; font-weight: 700; }
+        .instruction-sub { font-size: 14px; color: #94a3b8; margin-top: 6px; }
+
+        .camera-error {
+            position: absolute;
+            z-index: 3;
+            text-align: center;
+            padding: 0 32px;
+            font-size: 14px;
+            color: #cbd5e1;
+            display: none;
+        }
+
+        .liveness-controls {
+            padding: 20px 24px 40px;
+            background: #000;
+            z-index: 10;
+        }
+
+        .btn-primary-dark {
+            display: block;
+            width: 100%;
+            border: none;
+            background: #1d4ed8;
+            color: #fff;
+            font-size: 17px;
+            font-weight: 700;
+            font-family: inherit;
+            padding: 18px;
+            border-radius: 14px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .btn-primary-dark:disabled { background: #334155; color: #94a3b8; cursor: default; }
+        .btn-primary-dark:not(:disabled):active { background: #1e40af; }
+
+        /* Success overlay — inside the phone frame */
+        .success-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.92);
+            z-index: 50;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            text-align: center;
+            padding: 32px;
+        }
+        .success-overlay.show { display: flex; }
+
+        .success-check {
+            width: 88px;
+            height: 88px;
+            border-radius: 50%;
+            background: #10b981;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .success-title { font-size: 22px; font-weight: 800; }
+        .success-sub { font-size: 15px; color: #94a3b8; line-height: 1.5; }
+        .success-overlay .btn-primary-dark { margin-top: 16px; width: 100%; }
+    </style>
+</head>
+<body>
+    <script type="module">
+        // Auth guard: no session, no access.
+        import { requireSession } from './assets/js/session.js';
+        requireSession();
+    </script>
+
+    <div class="app-container cam">
+        <div class="liveness-header">
+            <a href="document-requirements.html" class="back-btn" id="back-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="28" height="28"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </a>
+            <span class="step-label">STEP 3 OF 3</span>
+            <div style="width: 28px;"></div>
+        </div>
+
+        <div class="viewfinder-container">
+            <video class="camera-feed" id="camera-feed" autoplay playsinline muted></video>
+            <div class="camera-error" id="camera-error">
+                Camera unavailable.
+            </div>
+
+            <div class="face-frame" id="face-frame" style="display: none;"></div>
+
+            <div class="instruction" id="instruction-box">
+                <div class="instruction-title" id="instruction-title">Loading secure scanner…</div>
+                <div class="instruction-sub" id="instruction-sub">Connecting to eGovPH Face Verification</div>
+            </div>
+
+            <!-- Embedded eGov liveness scanner (stays inside the phone frame) -->
+            <iframe id="liveness-frame" allow="camera; microphone"
+                style="display: none; position: absolute; inset: 0; width: 100%; height: 100%; border: none; z-index: 8; background: #000;"></iframe>
+        </div>
+
+        <div class="liveness-controls" style="display: none;">
+            <button class="btn-primary-dark" id="start-btn">Start Face Scan</button>
+        </div>
+
+        <!-- Success overlay -->
+        <div class="success-overlay" id="success-overlay">
+            <div class="success-check">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" width="44" height="44" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <div class="success-title">Application Submitted!</div>
+            <div class="success-sub" id="success-sub">
+                Your identity has been verified and your application has been submitted.<br>
+                You will be notified once it is reviewed.
+            </div>
+            <button class="btn-primary-dark" id="done-btn">View My Applications</button>
+        </div>
+    </div>
+
+    <script type="module">
+        // REAL eGov Face Liveness integration.
+        // Flow: create a session → redirect to eGov's hosted liveness page →
+        // it redirects back here (?cb=1) → fetch the result and enforce the
+        // recommended threshold (SUCCEEDED + confidence >= 95).
+        import { supabase, CURRENT_USER_ID } from './assets/js/supabase-client.js';
+
+        const LIVENESS_API = 'https://hackathon-face-liveness-api.e.gov.ph';
+        const LIVENESS_API_KEY = '9e31b23d-eeb4-ae08-ff13-cdf8380e5307';
+        const MIN_CONFIDENCE = 95.0;
+
+        const params = new URLSearchParams(location.search);
+        const ayudaId = params.get('id');
+        document.getElementById('back-link').href = ayudaId
+            ? `document-requirements.html?id=${encodeURIComponent(ayudaId)}`
+            : 'document-requirements.html';
+
+        // Personalize the success copy with the program name.
+        if (ayudaId) {
+            supabase.from('assistance').select('program_name').eq('id', ayudaId).single()
+                .then(({ data }) => {
+                    if (data) {
+                        document.getElementById('success-sub').innerHTML =
+                            `Your identity has been verified and your application for <b style="color:#fff;">${data.program_name}</b> has been submitted.<br>You will be notified once it is reviewed.`;
+                    }
+                });
+        }
+
+        const video = document.getElementById('camera-feed');
+        const errorEl = document.getElementById('camera-error');
+        const frame = document.getElementById('face-frame');
+        const titleEl = document.getElementById('instruction-title');
+        const subEl = document.getElementById('instruction-sub');
+        const startBtn = document.getElementById('start-btn');
+        const successOverlay = document.getElementById('success-overlay');
+
+        let stream = null;
+
+        async function startCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'user' },
+                    audio: false
+                });
+                video.srcObject = stream;
+            } catch (err) {
+                console.warn('Camera unavailable:', err);
+                errorEl.style.display = 'block';
+            }
+        }
+        // Our own camera preview stays off — the embedded eGov scanner owns
+        // the camera for the whole liveness step.
+
+        const livenessFrame = document.getElementById('liveness-frame');
+        const instructionBox = document.getElementById('instruction-box');
+        let sessionToken = null;
+        let pollTimer = null;
+
+        const controlsBar = document.querySelector('.liveness-controls');
+
+        function showRetry(message) {
+            clearInterval(pollTimer);
+            livenessFrame.style.display = 'none';
+            livenessFrame.src = 'about:blank';
+            instructionBox.style.display = 'block';
+            frame.style.display = '';
+            frame.classList.remove('scanning');
+            titleEl.textContent = 'Verification failed';
+            subEl.textContent = message;
+            controlsBar.style.display = 'block';
+            startBtn.disabled = false;
+            startBtn.textContent = 'Retry Face Scan';
+        }
+
+        async function handleSuccess(result) {
+            clearInterval(pollTimer);
+            livenessFrame.style.display = 'none';
+            livenessFrame.src = 'about:blank';
+            instructionBox.style.display = 'block';
+            frame.style.display = '';
+            controlsBar.style.display = 'block';
+            startBtn.textContent = 'Verified';
+            frame.classList.remove('scanning');
+            frame.classList.add('success');
+            titleEl.textContent = 'Verified';
+            subEl.textContent = `Liveness confirmed (${result.confidence_score.toFixed(1)}% confidence)`;
+
+            // Record the application (status: pending).
+            if (ayudaId && CURRENT_USER_ID) {
+                const { error: appError } = await supabase.from('applications')
+                    .insert({ user_id: CURRENT_USER_ID, assistance_id: ayudaId, status: 'pending' });
+                if (appError) console.error('Failed to record application', appError);
+            }
+            setTimeout(() => successOverlay.classList.add('show'), 700);
+        }
+
+        async function checkResult() {
+            if (!sessionToken) return;
+            try {
+                const res = await fetch(`${LIVENESS_API}/v1/liveness/result/${sessionToken}`, {
+                    headers: { 'x-api-key': LIVENESS_API_KEY },
+                });
+                if (!res.ok) return; // transient — keep polling
+                const result = await res.json();
+
+                if (result.status === 'CREATED' || result.status === 'PENDING' || result.status === 'IN_PROGRESS') return;
+
+                clearInterval(pollTimer);
+                if (result.status === 'SUCCEEDED' && result.confidence_score >= MIN_CONFIDENCE) {
+                    handleSuccess(result);
+                } else if (result.status === 'SUCCEEDED') {
+                    showRetry(`Confidence too low (${result.confidence_score?.toFixed(1)}%) — please retry.`);
+                } else {
+                    showRetry(`Scan ${result.status?.toLowerCase() || 'incomplete'} — please retry.`);
+                }
+            } catch (err) {
+                console.warn('Result poll failed', err);
+            }
+        }
+
+        // The embedded scanner announces completion via postMessage (action: post);
+        // we also poll the result endpoint as a safety net.
+        window.addEventListener('message', (e) => {
+            if (e.origin.includes('hackathon-face-liveness')) checkResult();
+        });
+
+        // The eGov scanner runs INSIDE the frame and has its own start button,
+        // so we launch it immediately — no redundant pre-step on our side.
+        async function launchScanner() {
+            try {
+                const res = await fetch(`${LIVENESS_API}/v1/liveness/session`, {
+                    method: 'POST',
+                    headers: { 'x-api-key': LIVENESS_API_KEY, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'post', delay: 1500 }),
+                });
+                if (!res.ok) throw new Error(`Session creation failed (${res.status})`);
+                const session = await res.json();
+                sessionToken = session.token;
+
+                // Free our camera and give the scanner the full screen area.
+                if (stream) stream.getTracks().forEach(t => t.stop());
+                instructionBox.style.display = 'none';
+                frame.style.display = 'none';
+                controlsBar.style.display = 'none';
+                livenessFrame.src = session.url;
+                livenessFrame.style.display = 'block';
+
+                pollTimer = setInterval(checkResult, 3000);
+            } catch (err) {
+                console.error(err);
+                showRetry('Could not start the face scan. Please try again.');
+            }
+        }
+
+        startBtn.addEventListener('click', () => {
+            startBtn.disabled = true;
+            startBtn.textContent = 'Preparing secure scan…';
+            launchScanner();
+        });
+
+        launchScanner();
+
+        document.getElementById('done-btn').addEventListener('click', () => {
+            // Captured documents stay verified — they carry over to any other
+            // ayuda that requires the same document.
+            window.location.href = 'transactions.html';
+        });
+    </script>
+</body>
+</html>

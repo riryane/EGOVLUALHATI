@@ -58,19 +58,19 @@
 }
 
 .greeting-name {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--primary-color);
+  font-size: 17px;
+  font-weight: 800;
+  color: #1d4ed8;
 }
 
 .greeting-sub {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-secondary);
 }
 
 .profile-pic {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background-color: #e2e8f0;
   object-fit: cover;
@@ -80,10 +80,13 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-main);
   margin-bottom: 20px;
+  background-color: #f1f5f9;
+  border-radius: 12px;
+  padding: 14px 16px;
 }
 
 .location {
@@ -99,10 +102,10 @@
 
 .search-input {
   width: 100%;
-  padding: 16px 20px;
-  border-radius: 12px;
-  border: 1px solid var(--border-color);
-  font-size: 15px;
+  padding: 18px 20px;
+  border-radius: 14px;
+  border: 1.5px solid var(--border-color);
+  font-size: 16px;
   color: var(--text-main);
   background-color: var(--white);
   outline: none;
@@ -135,10 +138,10 @@
 }
 
 .service-icon-wrapper {
-  width: 56px;
-  height: 56px;
+  width: 62px;
+  height: 62px;
   border-radius: 50%;
-  background-color: #f0f4ff;
+  background-color: #e9eefb;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -146,14 +149,14 @@
 }
 
 .service-icon-wrapper svg {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
 }
 
 .service-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 700;
+  color: #1f2937;
 }
 
 .badge-new {
@@ -222,15 +225,15 @@
   margin-top: 12px;
 }
 .dot {
-  width: 8px;
-  height: 8px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
-  background-color: #cbd5e1;
+  background-color: #9ca3af;
 }
 .dot.active {
-  width: 24px;
-  border-radius: 4px;
-  background-color: var(--primary-color);
+  width: 30px;
+  border-radius: 5px;
+  background-color: #1d4ed8;
 }
 
 .widgets-grid {

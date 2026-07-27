@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E-Tulong — Technical Brief &amp; Q&amp;A Guide</title>
+<style>
+    :root {
+        --ink: #111827;
+        --muted: #4b5563;
+        --line: #d1d5db;
+        --accent: #0d3b9e;
+        --soft: #f3f4f6;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+        font-family: Georgia, 'Times New Roman', serif;
+        color: var(--ink);
+        line-height: 1.55;
+        font-size: 13.5px;
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 40px 32px;
+        background: #fff;
+    }
+    .sans { font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; }
+
+    header { border-bottom: 3px solid var(--accent); padding-bottom: 18px; margin-bottom: 26px; }
+    header h1 { font-size: 30px; letter-spacing: -0.5px; }
+    header .tagline { font-style: italic; color: var(--muted); margin-top: 4px; }
+    header .meta { font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 11.5px; color: var(--muted); margin-top: 10px; }
+
+    h2 {
+        font-family: -apple-system, 'Segoe UI', Helvetica, sans-serif;
+        font-size: 17px;
+        color: var(--accent);
+        margin: 30px 0 10px;
+        padding-bottom: 4px;
+        border-bottom: 1px solid var(--line);
+    }
+    h3 {
+        font-family: -apple-system, 'Segoe UI', sans-serif;
+        font-size: 13.5px;
+        margin: 18px 0 6px;
+    }
+    p { margin-bottom: 9px; }
+    ul, ol { margin: 4px 0 10px 22px; }
+    li { margin-bottom: 4px; }
+    b { color: #000; }
+
+    .callout {
+        background: #eef2ff;
+        border-left: 4px solid var(--accent);
+        padding: 12px 16px;
+        margin: 14px 0;
+        font-size: 13px;
+    }
+    .callout b { color: var(--accent); }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: -apple-system, 'Segoe UI', sans-serif;
+        font-size: 11.5px;
+        margin: 10px 0 16px;
+    }
+    th, td { border: 1px solid var(--line); padding: 7px 9px; text-align: left; vertical-align: top; }
+    th { background: var(--soft); font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; }
+
+    pre {
+        font-family: 'SF Mono', Menlo, Consolas, monospace;
+        font-size: 10.5px;
+        background: var(--soft);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 12px 14px;
+        overflow-x: auto;
+        margin: 10px 0 16px;
+        line-height: 1.5;
+    }
+    code {
+        font-family: 'SF Mono', Menlo, Consolas, monospace;
+        font-size: 0.92em;
+        background: var(--soft);
+        padding: 1px 5px;
+        border-radius: 4px;
+    }
+
+    .qa { margin: 14px 0; page-break-inside: avoid; }
+    .qa .q {
+        font-family: -apple-system, 'Segoe UI', sans-serif;
+        font-weight: 700;
+        font-size: 13px;
+        background: var(--soft);
+        border-radius: 8px 8px 0 0;
+        padding: 10px 14px;
+        border: 1px solid var(--line);
+        border-bottom: none;
+    }
+    .qa .a {
+        border: 1px solid var(--line);
+        border-radius: 0 0 8px 8px;
+        padding: 10px 14px;
+        font-size: 13px;
+    }
+    .qa .a .tip {
+        font-family: -apple-system, 'Segoe UI', sans-serif;
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 8px;
+        border-top: 1px dashed var(--line);
+        padding-top: 6px;
+    }
+
+    .page-break { page-break-before: always; }
+    footer {
+        margin-top: 34px;
+        padding-top: 12px;
+        border-top: 1px solid var(--line);
+        font-family: -apple-system, 'Segoe UI', sans-serif;
+        font-size: 10.5px;
+        color: var(--muted);
+    }
+
+    @media print {
+        body { padding: 0; font-size: 11.5pt; max-width: none; }
+        a { color: inherit; text-decoration: none; }
+        h2 { break-after: avoid; }
+        .qa, table, .callout, pre { break-inside: avoid; }
+        .no-print { display: none; }
+    }
+    .print-btn {
+        position: fixed; top: 16px; right: 16px;
+        font-family: -apple-system, sans-serif; font-size: 13px; font-weight: 600;
+        background: var(--accent); color: #fff; border: none; border-radius: 8px;
+        padding: 10px 16px; cursor: pointer;
+    }
+</style>
+</head>
+<body>
+<button class="print-btn no-print" onclick="window.print()">🖨 Print</button>
+
+<header>
+    <h1>E-Tulong</h1>
+    <div class="tagline">"One Tap, One Tulong." — Technical Brief &amp; Q&amp;A Preparation Guide</div>
+    <div class="meta">Lualhatinnovators · University of the East – Manila · eGov Hackathon · Integrated module concept for the eGovPH Super App</div>
+</header>
+
+<div class="callout">
+    <b>Read this first — how to frame the prototype.</b> The implementation choices (static HTML, a hosted PostgreSQL service, sandbox API keys in the client) were <b>deliberate time-constraint decisions</b> made to spend the hackathon proving what actually matters: <b>the idea, the live eGov API orchestration, and the end-to-end process design</b> — identity, eligibility, evidence, verification, and due process. Every one of those flows runs on real government APIs. The delivery stack is disposable; the design is the contribution.
+</div>
+
+<h2>1. What E-Tulong is</h2>
+<p>A one-stop government assistance module for the eGovPH Super App: citizens <b>discover</b> the ayuda they qualify for, <b>apply once</b> with documents they already have on record, <b>verify identity</b> biometrically, and <b>track and claim</b> benefits — while agencies review, decide with written reasons, and confirm claims securely. It consumes four existing eGov services rather than rebuilding any of them.</p>
+
+<h2>2. Architecture</h2>
+<pre>
+Browser (citizen app + agency portal, same codebase)
+ ├── eGov SSO ............ identity & auto-registration (hackathon-sso.e.gov.ph)
+ ├── eMessage ............ SMS: OTP, status notices, claim codes (ws-message.e.gov.ph)
+ ├── eGov Face Liveness .. biometric proof of presence (hackathon-face-liveness-api.e.gov.ph)
+ ├── eGov AI ............. document OCR extraction (egov-ai-core-ws.oueg.info)
+ └── PostgreSQL .......... users / programs / applications / id_cards
+                           (Supabase for the MVP — any government-hosted Postgres in production)
+</pre>
+<p><b>Why buildless/static:</b> zero deployment friction and it proves every integration is plain HTTP — the calls port unchanged to any production stack. <b>Why Supabase:</b> a stand-in for the agency-side data service; four tables of standard PostgreSQL with nothing vendor-specific.</p>
+
+<h2>3. The four live API integrations</h2>
+
+<h3>3.1 eGov SSO — identity &amp; auto-registration</h3>
+<ul>
+    <li>OAuth2 authorization-code pattern: eGovPH redirects with a single-use <code>exchange_code</code> → <code>POST /api/token</code> (partner code + secret) → bearer token → <code>POST /api/partner/sso_authentication</code> → full citizen profile including the PhilSys record.</li>
+    <li>Users are matched by <code>uniqid</code> per the eGov integration guide: existing → profile refresh; new → auto-registration, program catalog, Digital ID.</li>
+    <li>The SSO payload is the <b>source of truth</b> for profile data — the app never edits profiles locally, satisfying the eGov checklist ("profile updates occur exclusively through eGovPH").</li>
+</ul>
+
+<h3>3.2 eMessage — the SMS channel (three uses)</h3>
+<ul>
+    <li><b>Login OTP</b>: 6-digit code, 5-minute expiry, account resolved by registered mobile — a possession factor.</li>
+    <li><b>Status notifications</b>: every agency decision texts the citizen, including the written reason on rejection.</li>
+    <li><b>Claim codes</b>: fresh code generated at the counter for two-factor pick-up (see §6).</li>
+</ul>
+
+<h3>3.3 eGov Face Liveness — anti-ghost-beneficiary</h3>
+<ul>
+    <li><code>POST /v1/liveness/session</code> (action <code>post</code>) → hosted scanner embedded <b>inside the app frame</b> (iframe with camera permission); completion via postMessage plus result polling.</li>
+    <li><code>GET /v1/liveness/result/{token}</code> → we enforce the vendor threshold: <b>SUCCEEDED and confidence ≥ 95.0</b>; anything less is rejected with retry. Only a passing scan records the application.</li>
+</ul>
+
+<h3>3.4 eGov AI Document Extractor — OCR plus our verification layer</h3>
+<ul>
+    <li>Access code → <code>POST /api/v1/egov/integration/token</code> → 48-hour token, 200 credits; we cache, auto-refresh before expiry, and retry once on 401.</li>
+    <li>Camera frame (canvas → JPEG) → <code>multipart/form-data</code> → structured extracted fields.</li>
+    <li><b>Our layer:</b> OCR reads anything — it doesn't know what the program requires. Extracted text is matched against keyword sets derived from the required document's name; a mismatch raises "Wrong Document?" That's the difference between OCR and <i>verification</i>.</li>
+</ul>
+
+<h2 class="page-break">4. Data model &amp; eligibility engine</h2>
+<table>
+    <tr><th>Table</th><th>Purpose</th><th>Key columns</th></tr>
+    <tr><td><code>users</code></td><td>Citizen profiles from SSO</td><td><code>egov_uniqid</code> (identity binding), profile fields, <code>consented_at</code> (RA 10173)</td></tr>
+    <tr><td><code>assistance</code></td><td>Program catalog</td><td><code>rules</code> (eligibility criteria), <code>documents</code> (checklist), <code>requirements</code></td></tr>
+    <tr><td><code>applications</code></td><td>One row per application</td><td><code>status</code> (state machine), <code>admin_note</code>, <code>citizen_note</code> (appeal), <code>submitted_documents</code> (evidence snapshot), <code>claim_code</code> + expiry</td></tr>
+    <tr><td><code>id_cards</code></td><td>Digital ID render data</td><td>PhilSys PCN from SSO</td></tr>
+</table>
+<p><b>Eligibility is computed, not stored.</b> Each program carries machine-readable rules evaluated against the live profile: <i>age range</i> (from birth date), <i>residency</i> (address match), <i>profile completeness</i> (names exactly what's missing), and <i>no other active benefit in the same category</i> (prevents stacking). All rules met → Eligible; otherwise Possibly Eligible with a per-rule pass/fail checklist. The <b>same engine runs on the agency side</b>, so citizen and officer see one truth. Adding a program or rule is a data change, not a code change.</p>
+
+<h2>5. Application lifecycle — due process by construction</h2>
+<pre>
+pending ──► approved ──► for_pickup ──► done ──► expired (cycle reset → may re-apply)
+   │
+   ├──► info_requested ──(citizen submits document)──► pending
+   │
+   └──► rejected ──(cooldown; may appeal during it)──► appealed ──► approve / final deny
+</pre>
+<ul>
+    <li>All transitions are <b>agency-side</b>; citizens see read-only status — except the citizen-initiated appeal and info response.</li>
+    <li>Deny and Request Info <b>require a written message</b>, shown in-app and sent by SMS — the system will not allow a reasonless rejection.</li>
+    <li>Rejection triggers a re-apply cooldown (demo: 2 min; production: policy, e.g. 30 days). Appeals are allowed <i>during</i> the cooldown — that is the point of due process.</li>
+    <li>Active applications block duplicates; "expired" preserves history while unlocking next-cycle re-application.</li>
+</ul>
+
+<h2>6. Secure claiming — two-factor pick-up</h2>
+<ol>
+    <li><b>Something you have:</b> at the counter the officer sends a fresh 6-digit SMS code (5-minute expiry) to the <i>registered</i> number; the citizen reads it back; the officer confirms against the freshest database state. Codes are single-purpose and cleared after use.</li>
+    <li><b>Something you are:</b> identity was bound by face liveness at application time and the Digital ID at the counter.</li>
+</ol>
+<p>Result: benefits cannot be claimed by proxy — the registered SIM must be physically present.</p>
+
+<h2>7. Evidence trail</h2>
+<ul>
+    <li>Verified documents are keyed by <b>document name</b> — one captured SSS record satisfies every program that needs it. This is the "stop re-submitting the same photocopy" pain point, implemented.</li>
+    <li>Each submission stores a <b>snapshot</b> of the document evidence (what was verified and how: eGov record vs. camera OCR). The agency reviews evidence <i>as submitted</i>, immune to later changes.</li>
+</ul>
+
+<h2>8. Privacy (RA 10173)</h2>
+<ul>
+    <li>Consent gate on first use; consent timestamp stored.</li>
+    <li>Plain-language privacy notice: what is collected, why, legal basis, retention, the citizen's NPC rights, DPO contact.</li>
+    <li>Profile data flows exclusively from eGovPH; roadmap adds audit logging and retention enforcement.</li>
+</ul>
+
+<h2>9. Known limitations — say these before they ask</h2>
+<table>
+    <tr><th>MVP concession (time-boxed choice)</th><th>Production design</th></tr>
+    <tr><td>API secrets in client JS</td><td>Backend proxy / edge functions hold all secrets; sandbox keys rotated after the event</td></tr>
+    <tr><td>Database RLS disabled</td><td>Row-level security per user; agency writes only via authenticated server endpoints</td></tr>
+    <tr><td>Agency portal unauthenticated</td><td>Agency SSO + role-based access + full audit log (decisions are appealable public acts)</td></tr>
+    <tr><td>Rules engine runs client-side</td><td>Server-side evaluation — a client must never declare itself eligible</td></tr>
+    <tr><td>Sessions / captured-doc flags in localStorage</td><td>eGov-managed sessions; document store tied to the user with retention rules</td></tr>
+    <tr><td>Demo fallbacks when sandbox APIs are down</td><td>Removed; retry queues and status pages instead — fallbacks are labeled, never silent</td></tr>
+</table>
+
+<h2 class="page-break">10. Hard questions — model answers</h2>
+
+<div class="qa"><div class="q">Q: "Your secrets are in client-side JavaScript. That's a security hole."</div>
+<div class="a">"Correct — and it's a documented, deliberate MVP concession. The prototype is intentionally backend-less so we could prove all four eGov integrations within the hackathon window. Production moves every token exchange behind a backend proxy; the browser never sees a secret; all sandbox keys get rotated. It's item one in our limitations table."
+<div class="tip">Pattern for all security questions: <b>agree → "deliberate and documented" → production design.</b> Never defensive.</div></div></div>
+
+<div class="qa"><div class="q">Q: "Why should I trust your eligibility results?"</div>
+<div class="a">"Eligibility isn't hardcoded — a rules engine computes it from the citizen's SSO profile: age, residency, profile completeness, and no other active benefit in the same category, which prevents stacking. The same engine runs on the agency side, so both parties see one computation. Production runs it server-side, since clients can't be trusted to declare themselves eligible."</div></div>
+
+<div class="qa"><div class="q">Q: "How do you prevent ghost beneficiaries or claiming for someone else?"</div>
+<div class="a">"Three layers: identity at registration through eGov SSO bound by uniqid; identity at application through Face Liveness at their recommended threshold — SUCCEEDED, ≥95 confidence, below it we reject; and possession at claim — a fresh 6-digit SMS code with 5-minute expiry sent to the registered SIM, which must physically be at the counter. That's two-factor claiming."</div></div>
+
+<div class="qa"><div class="q">Q: "OCR just reads text. How do you know it's the right document?"</div>
+<div class="a">"That's why we built a verification layer above the extractor: extracted text is matched against keyword sets for the required document — a driver's license photographed in place of a barangay certificate is flagged 'Wrong Document'. And submissions snapshot the evidence, so the agency reviews what was actually submitted."</div></div>
+
+<div class="qa"><div class="q">Q: "What happens when eGov's APIs go down?"</div>
+<div class="a">"We lived that — eMessage and eGov AI both went down during development. Every path fails soft: clear error states and labeled demo fallbacks, with the real path resuming automatically when service returns. Our design rule was: never silently fake success."</div></div>
+
+<div class="qa"><div class="q">Q: "Why Supabase / why plain HTML? Is this production technology?"</div>
+<div class="a">"Those were time-boxed delivery choices, not architectural commitments. The data layer is four tables of standard PostgreSQL that port to any government-hosted database unchanged; the frontend proves the integrations are plain HTTP. What we're presenting is the idea, the API orchestration, and the process design — the stack underneath is replaceable in a sprint."</div></div>
+
+<div class="qa"><div class="q">Q: "How does this scale — more programs, more agencies, 110M citizens?"</div>
+<div class="a">"A new ayuda program is a database row — rules plus a document checklist — zero code changes. The heavy lifting (identity, SMS, biometrics, OCR) already runs on eGov's national infrastructure; our layer is thin orchestration. Agency onboarding is configuration, not development."</div></div>
+
+<div class="qa"><div class="q">Q: "What about the Data Privacy Act?"</div>
+<div class="a">"Built in: consent gate with stored timestamp on first use, a plain-language privacy notice covering collection, purpose, retention, and NPC rights, and profile data flowing exclusively from eGovPH per their checklist. Roadmap adds audit logging and retention enforcement."</div></div>
+
+<div class="qa"><div class="q">Q: "A citizen gets rejected. Then what?"</div>
+<div class="a">"The system won't allow a reasonless rejection — the officer must write one and it's SMSed to the citizen. A cooldown prevents immediate re-application, but the citizen may appeal during it; the officer sees the reason and the appeal side by side and can overturn. Due process is enforced by the state machine, not left to policy."</div></div>
+
+<div class="qa"><div class="q">Q: "What's real and what's mocked?"</div>
+<div class="a">"All four eGov APIs are live: SSO with auto-registration, real SMS through eMessage, real face liveness through their scanner embedded in-app, real OCR with managed token lifecycle. The only non-real elements are clearly labeled demo fallbacks for sandbox downtime."</div></div>
+
+<div class="qa"><div class="q">Q: "Isn't this just duplicating what agencies already have?"</div>
+<div class="a">"The opposite — agencies keep their systems; E-Tulong is the missing citizen-facing layer on top of infrastructure the government already built. We wrote zero identity code, zero SMS infrastructure, zero biometrics. The gap has never been the assistance — it's that no single system makes it visible, applicable, and claimable. That's the layer we built."</div></div>
+
+<h2>11. Delivery — leaving a mark in the 1-on-1</h2>
+<ol>
+    <li><b>Open with the live phone, not slides.</b> Apply → a real SMS lands on the table → agency portal → approve → second SMS. A judge who receives a text message remembers the team.</li>
+    <li><b>Volunteer a weakness first.</b> "Before you ask — yes, secrets are client-side; here's why and here's the fix." It converts their attack list into your agenda and signals engineering maturity.</li>
+    <li><b>One drives, one answers.</b> Assign sections of this brief to specific teammates; rehearse the handoffs. Silence kills more Q&amp;As than wrong answers.</li>
+    <li><b>Tell the ecosystem story in one line:</b> "Zero identity code, zero SMS infrastructure, zero biometrics — four government APIs consumed, one missing citizen experience shipped." That's exactly what this hackathon judges.</li>
+    <li><b>Bridge, never bluff:</b> "We haven't handled that — the design would be X." Judges probe for honesty as much as knowledge.</li>
+    <li><b>Close by handing over this document.</b> Real documentation with a limitations table is rare at hackathons; it outlives the session.</li>
+</ol>
+
+<footer>
+    E-Tulong · Lualhatinnovators · Prepared for the eGov Hackathon technical Q&amp;A · The implementation stack is a time-boxed vehicle; the contribution is the idea, the live eGov API orchestration, and the process design.
+</footer>
+</body>
+</html>

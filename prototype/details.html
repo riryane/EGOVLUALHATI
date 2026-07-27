@@ -141,6 +141,18 @@
                 console.error('Failed to load benefit', error);
                 rootEl.innerHTML = '<p style="padding:24px;">Benefit not found.</p>';
             } else {
+                // Application history first — the rules engine needs it.
+                const { data: myAppsRaw } = await supabase
+                    .from('applications')
+                    .select('status, updated_at, admin_note, assistance_id, assistance ( category, program_name )')
+                    .eq('user_id', CURRENT_USER_ID)
+                    .order('updated_at', { ascending: false });
+                const myApps = myAppsRaw || [];
+                const appsForThis = myApps.filter(a => a.assistance_id === r.id);
+
+                // Computed eligibility (rules engine); falls back to seeded values.
+                const computed = evaluate(r, currentProfile(), myApps);
+
                 const isEligible = (computed?.verdict || r.eligibility_status) === 'eligible';
                 const eligTitle = computed?.title || r.eligibility_title;
                 const eligDesc = computed?.desc || r.eligibility_desc;
@@ -203,18 +215,6 @@
                     </div>`;
 
                 // Application state for this ayuda decides what the button does.
-                const { data: myApps } = await supabase
-                    .from('applications')
-                    .select('status, updated_at, admin_note, assistance_id, assistance ( category, program_name )')
-                    .eq('user_id', CURRENT_USER_ID)
-                    .order('updated_at', { ascending: false })
-                    .then(res => ({ data: (res.data || []) }));
-
-                const appsForThis = myApps.filter(a => a.assistance_id === r.id);
-
-                // Computed eligibility (rules engine); falls back to seeded values.
-                const computed = evaluate(r, currentProfile(), myApps);
-
                 const activeApp = appsForThis.find(a => !['rejected', 'expired', 'appealed'].includes(a.status)) || appsForThis.find(a => a.status === 'appealed');
 
                 // Rejection cooldown: blocked from re-applying for a period after

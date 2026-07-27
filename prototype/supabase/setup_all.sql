@@ -25,7 +25,8 @@ create table users (
   birth_province     text,
   birth_municipality text,
   marital_status     text,
-  egov_uniqid        text unique
+  egov_uniqid        text unique,
+  consented_at       timestamptz
 );
 
 create table assistance (
@@ -45,7 +46,8 @@ create table assistance (
   documents          jsonb default '[]'::jsonb, -- [{name, source, verified}]
   accent_color       text,
   primary_action     text,               -- 'Apply Now' | 'Set Reminder'
-  sort_order         int default 0
+  sort_order         int default 0,
+  rules              jsonb default '[]'::jsonb  -- eligibility rules (see eligibility.js)
 );
 
 create table id_cards (
@@ -71,7 +73,8 @@ create table applications (
   updated_at    timestamptz not null default now(),
   claim_code            text,
   claim_code_expires_at timestamptz,
-  admin_note            text
+  admin_note            text,
+  citizen_note          text
 );
 
 -- MVP: no row level security anywhere.
@@ -160,3 +163,35 @@ insert into applications (user_id, assistance_id, status, applied_at)
 select user_id, id, 'for_pickup', '2026-07-15' from assistance where program_name = 'TUPAD Program';
 insert into applications (user_id, assistance_id, status, applied_at)
 select user_id, id, 'approved', '2026-07-18' from assistance where program_name = 'CHED Tulong Dunong Program';
+
+-- ---------- eligibility rules ----------
+
+update assistance set rules = '[
+  {"type": "age_range", "min": 18, "max": 65},
+  {"type": "residency", "keyword": "Quezon City"},
+  {"type": "profile_complete", "fields": ["date_of_birth", "address", "phone"]},
+  {"type": "no_active_same_category"}
+]'::jsonb where program_name like 'Pantawid%';
+
+update assistance set rules = '[
+  {"type": "age_range", "min": 18, "max": 100},
+  {"type": "profile_complete", "fields": ["date_of_birth", "address", "phone"]},
+  {"type": "no_active_same_category"}
+]'::jsonb where program_name like 'Assistance to Individuals%';
+
+update assistance set rules = '[
+  {"type": "age_range", "min": 18, "max": 60},
+  {"type": "profile_complete", "fields": ["date_of_birth", "address", "phone"]},
+  {"type": "no_active_same_category"}
+]'::jsonb where program_name = 'TUPAD Program';
+
+update assistance set rules = '[
+  {"type": "age_range", "min": 16, "max": 30},
+  {"type": "profile_complete", "fields": ["date_of_birth", "address"]},
+  {"type": "no_active_same_category"}
+]'::jsonb where program_name = 'CHED Tulong Dunong Program';
+
+update assistance set rules = '[
+  {"type": "residency", "keyword": "Quezon City"},
+  {"type": "profile_complete", "fields": ["address"]}
+]'::jsonb where program_name = 'Ayuda Food Pack';

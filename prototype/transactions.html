@@ -75,6 +75,12 @@
                 </div>
             </div>
 
+            <div style="padding: 0 24px; margin-bottom: 4px; position: relative;">
+                <input type="text" id="app-search" placeholder="Search applications"
+                    style="width: 100%; box-sizing: border-box; border: 1px solid var(--border-color); border-radius: 12px; padding: 12px 40px 12px 14px; font-family: inherit; font-size: 14px; color: var(--text-main); outline: none;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" width="18" height="18" style="position: absolute; right: 38px; top: 50%; transform: translateY(-50%);"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </div>
+
             <div class="filters" id="status-filters" style="flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none;">
                 <a href="#" class="filter-pill active" data-status="all">All</a>
                 <a href="#" class="filter-pill" data-status="pending">Pending</a>
@@ -83,12 +89,29 @@
                 <a href="#" class="filter-pill" data-status="for_pickup">For Pick-up</a>
                 <a href="#" class="filter-pill" data-status="done">Done</a>
                 <a href="#" class="filter-pill" data-status="rejected">Rejected</a>
+                <a href="#" class="filter-pill" data-status="appealed">Appealed</a>
                 <a href="#" class="filter-pill" data-status="expired">Expired</a>
             </div>
 
             <div class="transaction-list" id="app-list"></div>
         </div>
 
+
+        <!-- Appeal modal -->
+        <div id="appeal-modal" style="position: absolute; inset: 0; background: rgba(15, 23, 42, 0.55); z-index: 80; display: none; align-items: flex-end;">
+            <div style="background: #fff; width: 100%; border-radius: 24px 24px 0 0; padding: 24px 24px 36px;">
+                <div style="width: 40px; height: 4px; background: #e2e8f0; border-radius: 2px; margin: 0 auto 20px;"></div>
+                <div style="font-size: 17px; font-weight: 800; color: #0f172a; margin-bottom: 6px;">Request Reconsideration</div>
+                <div style="font-size: 13px; color: #64748b; margin-bottom: 14px; line-height: 1.5;">
+                    Explain why you believe the decision should be reviewed. Your appeal is sent to the agency together with your application.
+                </div>
+                <textarea id="appeal-input" rows="3" placeholder="e.g. My income documents were outdated — I have since lost my job and can provide updated records."
+                    style="width: 100%; box-sizing: border-box; border: 1px solid var(--border-color); border-radius: 12px; padding: 12px 14px; font-family: inherit; font-size: 14px; color: #0f172a; outline: none; resize: none;"></textarea>
+                <div id="appeal-error" style="display: none; font-size: 12.5px; color: #dc2626; font-weight: 600; margin-top: 6px;">Please describe your reason.</div>
+                <button id="appeal-submit" style="display: block; width: 100%; border: none; background: #0284c7; color: #fff; font-family: inherit; font-size: 15px; font-weight: 700; padding: 15px; border-radius: 12px; cursor: pointer; margin-top: 16px;">Submit Appeal</button>
+                <button id="appeal-cancel" style="display: block; width: 100%; background: none; border: none; margin-top: 12px; font-family: inherit; font-size: 13.5px; font-weight: 700; color: #64748b; cursor: pointer;">Cancel</button>
+            </div>
+        </div>
 
         <div class="dash-bottom-nav">
             <a href="main-dashboard.html" class="dash-nav-item">
@@ -159,6 +182,8 @@
                 icon: '<polyline points="20 6 9 17 4 12"></polyline>' },
             rejected:   { label: 'Rejected',    color: '#ef4444', bg: '#fef2f2',
                 icon: '<line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>' },
+            appealed:   { label: 'Appealed',    color: '#0284c7', bg: '#e0f2fe',
+                icon: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>' },
             expired:    { label: 'Expired',     color: '#64748b', bg: '#f1f5f9',
                 icon: '<circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>' },
             for_pickup: { label: 'For Pick-up', color: '#8b5cf6', bg: '#f5f3ff',
@@ -171,8 +196,19 @@
 
         let apps = [];
 
+        let activeFilter = 'all';
+        let searchTerm = '';
+
         function render(filter) {
-            const visible = filter === 'all' ? apps : apps.filter(a => a.status === filter);
+            if (filter !== undefined) activeFilter = filter;
+            const visible = apps.filter(a => {
+                if (activeFilter !== 'all' && a.status !== activeFilter) return false;
+                if (searchTerm) {
+                    const hay = `${a.assistance?.program_name || ''} ${a.assistance?.agency || ''} ${STATUS[a.status]?.label || ''}`.toLowerCase();
+                    if (!hay.includes(searchTerm)) return false;
+                }
+                return true;
+            });
             if (!visible.length) {
                 listEl.innerHTML = '<p style="padding: 16px 24px; color: #64748b;">No applications here yet.</p>';
                 return;
@@ -181,11 +217,25 @@
                 const s = STATUS[a.status] || STATUS.pending;
                 const prog = a.assistance || {};
 
-                const noteBlock = a.admin_note && ['rejected', 'info_requested'].includes(a.status) ? `
+                const noteBlock = a.admin_note && ['rejected', 'info_requested', 'appealed'].includes(a.status) ? `
                     <div style="margin: 0 24px 8px; font-size: 12.5px; line-height: 1.5; padding: 10px 12px; border-radius: 10px;
                         color: ${a.status === 'rejected' ? '#b91c1c' : '#b45309'};
                         background: ${a.status === 'rejected' ? '#fef2f2' : '#fffbeb'};">
-                        <b>${a.status === 'rejected' ? 'Reason' : 'Requested'}:</b> ${esc(a.admin_note)}
+                        <b>${a.status === 'info_requested' ? 'Requested' : 'Reason'}:</b> ${esc(a.admin_note)}
+                    </div>` : '';
+
+                const appealBlock = a.status === 'appealed' && a.citizen_note ? `
+                    <div style="margin: 0 24px 8px; font-size: 12.5px; line-height: 1.5; padding: 10px 12px; border-radius: 10px; color: #0369a1; background: #e0f2fe;">
+                        <b>Your appeal:</b> ${esc(a.citizen_note)}
+                    </div>` : '';
+
+                const appealAction = a.status === 'rejected' ? `
+                    <div style="margin: 0 24px 14px;">
+                        <button class="appeal-btn" data-id="${a.id}"
+                            style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; border: 1.5px solid #0284c7; background: #fff; color: #0284c7; font-family: inherit; font-size: 13.5px; font-weight: 700; padding: 12px; border-radius: 12px; cursor: pointer;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                            Request Reconsideration
+                        </button>
                     </div>` : '';
 
                 const infoAction = a.status === 'info_requested' ? `
@@ -217,6 +267,8 @@
                         </div>
                     </div>
                     ${noteBlock}
+                    ${appealBlock}
+                    ${appealAction}
                     ${infoAction}
                 </div>`;
             }).join('');
@@ -224,7 +276,7 @@
 
         const { data, error } = await supabase
             .from('applications')
-            .select('id, status, applied_at, admin_note, assistance ( program_name, agency, amount_label, assistance_type )')
+            .select('id, status, applied_at, admin_note, citizen_note, assistance ( program_name, agency, amount_label, assistance_type )')
             .eq('user_id', CURRENT_USER_ID)
             .order('applied_at', { ascending: false });
 
@@ -236,7 +288,7 @@
             document.getElementById('sum-total').textContent = apps.length;
             document.getElementById('sum-done').textContent = apps.filter(a => a.status === 'done').length;
             document.getElementById('sum-active').textContent =
-                apps.filter(a => ['pending', 'info_requested', 'approved', 'for_pickup'].includes(a.status)).length;
+                apps.filter(a => ['pending', 'info_requested', 'appealed', 'approved', 'for_pickup'].includes(a.status)).length;
             render('all');
 
             filtersEl.addEventListener('click', (e) => {

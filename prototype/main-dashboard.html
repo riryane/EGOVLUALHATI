@@ -244,6 +244,25 @@
             </div>
         </div>
 
+        <!-- Data privacy consent gate -->
+        <div id="consent-modal" style="position: absolute; inset: 0; background: rgba(15, 23, 42, 0.6); z-index: 90; display: none; align-items: flex-end;">
+            <div style="background: #fff; width: 100%; border-radius: 24px 24px 0 0; padding: 24px 24px 36px;">
+                <div style="width: 40px; height: 4px; background: #e2e8f0; border-radius: 2px; margin: 0 auto 20px;"></div>
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+                    <div style="width: 44px; height: 44px; border-radius: 50%; background: #eff4ff; color: #1d4ed8; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    </div>
+                    <div style="font-size: 18px; font-weight: 800; color: #0f172a;">Data Privacy Consent</div>
+                </div>
+                <div style="font-size: 14px; color: #64748b; line-height: 1.6; margin-bottom: 16px;">
+                    eTulong processes your eGovPH profile, contact details, and application records to assess ayuda eligibility, process applications, and verify benefit claims — in accordance with the <b>Data Privacy Act of 2012 (RA 10173)</b>.
+                    <a href="privacy.html" style="color: #1d4ed8; font-weight: 700;">Read the full Privacy Notice</a>.
+                </div>
+                <button id="consent-agree" style="display: block; width: 100%; border: none; background: #1d4ed8; color: #fff; font-family: inherit; font-size: 16px; font-weight: 700; padding: 16px; border-radius: 14px; cursor: pointer;">I Agree</button>
+                <button id="consent-decline" style="display: block; width: 100%; background: none; border: none; margin-top: 12px; font-family: inherit; font-size: 13.5px; font-weight: 700; color: #64748b; cursor: pointer;">Decline and Log Out</button>
+            </div>
+        </div>
+
         <!-- Bottom Navigation -->
         <div class="dash-bottom-nav">
             <a href="#" class="dash-nav-item active">
@@ -299,9 +318,25 @@
     <script type="module">
         // Profile data comes from the session (populated by eGov SSO at login) —
         // no users-table fetch here.
-        import { currentProfile } from './assets/js/session.js';
+        import { currentProfile, logout } from './assets/js/session.js';
+        import { supabase, CURRENT_USER_ID } from './assets/js/supabase-client.js';
 
         const user = currentProfile();
+
+        // RA 10173 consent gate: shown once, before first use.
+        if (user && !user.consented_at) {
+            document.getElementById('consent-modal').style.display = 'flex';
+        }
+        document.getElementById('consent-agree')?.addEventListener('click', async () => {
+            const ts = new Date().toISOString();
+            const { error } = await supabase.from('users').update({ consented_at: ts }).eq('id', CURRENT_USER_ID);
+            if (error) console.error('Consent save failed', error);
+            const prof = currentProfile() || {};
+            prof.consented_at = ts;
+            localStorage.setItem('session_profile', JSON.stringify(prof));
+            document.getElementById('consent-modal').style.display = 'none';
+        });
+        document.getElementById('consent-decline')?.addEventListener('click', logout);
         if (user) {
             const firstName = (user.full_name || '').trim().split(' ')[0].toUpperCase();
             if (firstName) document.getElementById('greeting-name').textContent = `Mabuhay, ${firstName}`;

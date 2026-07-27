@@ -170,8 +170,9 @@
     <script type="module">
         // Per-ayuda document requirements, loaded from the assistance row.
         // Captured docs are tracked per program: captured_<assistanceId>_<docIndex>.
-        import { supabase } from './assets/js/supabase-client.js';
-        import { clearCapturedDocs } from './assets/js/session.js';
+        import { supabase, CURRENT_USER_ID } from './assets/js/supabase-client.js';
+        import { clearCapturedDocs, currentProfile } from './assets/js/session.js';
+        import { evaluate } from './assets/js/eligibility.js';
 
         const listEl = document.getElementById('doc-list');
         const nextBtn = document.getElementById('next-btn');
@@ -239,12 +240,16 @@
         if (!ayudaId) {
             listEl.innerHTML = '<p style="padding: 8px 24px; color: #64748b;">No program selected. Go back and choose a benefit.</p>';
         } else {
-            const { data: ayuda, error } = await supabase
-                .from('assistance').select('program_name, documents, eligibility_status').eq('id', ayudaId).single();
+            const [{ data: ayuda, error }, { data: myApps }] = await Promise.all([
+                supabase.from('assistance').select('*').eq('id', ayudaId).single(),
+                supabase.from('applications').select('assistance_id, status, assistance ( category, program_name )')
+                    .eq('user_id', CURRENT_USER_ID),
+            ]);
+            const verdict = ayuda ? (evaluate(ayuda, currentProfile(), myApps)?.verdict || ayuda.eligibility_status) : null;
             if (error || !ayuda) {
                 console.error(error);
                 listEl.innerHTML = '<p style="padding: 8px 24px; color: #64748b;">Could not load requirements.</p>';
-            } else if (ayuda.eligibility_status !== 'eligible') {
+            } else if (verdict !== 'eligible') {
                 // Deep-link guard: possibly-eligible programs can't be applied to.
                 window.location.replace(`details.html?id=${encodeURIComponent(ayudaId)}`);
             } else {

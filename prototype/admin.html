@@ -137,6 +137,12 @@
             <div class="admin-sub">Review citizen applications — approve, deny, or request additional information.</div>
         </div>
 
+        <div style="padding: 10px 24px 0; position: relative;">
+            <input type="text" id="admin-search" placeholder="Search by applicant or program"
+                style="width: 100%; box-sizing: border-box; border: 1px solid var(--border-color); border-radius: 12px; padding: 11px 40px 11px 14px; font-family: inherit; font-size: 13.5px; color: #0f172a; outline: none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" width="17" height="17" style="position: absolute; right: 38px; top: 50%; transform: translateY(-30%);"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        </div>
+
         <div class="filter-row" id="admin-filters">
             <button class="f-pill active" data-status="all">All</button>
             <button class="f-pill" data-status="pending">Pending</button>
@@ -144,6 +150,7 @@
             <button class="f-pill" data-status="approved">Approved</button>
             <button class="f-pill" data-status="for_pickup">For Pick-up</button>
             <button class="f-pill" data-status="done">Done</button>
+            <button class="f-pill" data-status="appealed">Appealed</button>
             <button class="f-pill" data-status="rejected">Rejected</button>
             <button class="f-pill" data-status="expired">Expired</button>
         </div>
@@ -187,6 +194,7 @@
             done:           ['Done',           '#059669', '#ecfdf5'],
             rejected:       ['Rejected',       '#dc2626', '#fef2f2'],
             expired:        ['Expired',        '#64748b', '#f1f5f9'],
+            appealed:       ['Appealed',       '#0284c7', '#e0f2fe'],
         };
 
         const SMS = {
@@ -202,9 +210,17 @@
 
         let apps = [];
         let activeFilter = 'all';
+        let searchTerm = '';
 
         function render() {
-            const visible = activeFilter === 'all' ? apps : apps.filter(a => a.status === activeFilter);
+            const visible = apps.filter(a => {
+                if (activeFilter !== 'all' && a.status !== activeFilter) return false;
+                if (searchTerm) {
+                    const hay = `${a.users?.full_name || ''} ${a.assistance?.program_name || ''} ${a.assistance?.agency || ''}`.toLowerCase();
+                    if (!hay.includes(searchTerm)) return false;
+                }
+                return true;
+            });
             if (!visible.length) {
                 listEl.innerHTML = '<p style="padding: 16px 24px; color: #64748b;">No applications in this view.</p>';
                 return;
@@ -216,9 +232,14 @@
                               : ['done', 'rejected'].includes(a.status) ? ['expired', 'Reset Cycle — Allow Re-Application']
                               : null;
 
-                const noteBlock = a.admin_note && ['rejected', 'info_requested'].includes(a.status) ? `
-                    <div style="flex-basis: 100%; font-size: 12.5px; color: ${a.status === 'rejected' ? '#dc2626' : '#b45309'}; background: ${a.status === 'rejected' ? '#fef2f2' : '#fffbeb'}; border-radius: 10px; padding: 10px 12px; line-height: 1.5;">
-                        <b>${a.status === 'rejected' ? 'Rejection reason' : 'Info requested'}:</b> ${esc(a.admin_note)}
+                const noteBlock = a.admin_note && ['rejected', 'info_requested', 'appealed'].includes(a.status) ? `
+                    <div style="flex-basis: 100%; font-size: 12.5px; color: ${a.status === 'info_requested' ? '#b45309' : '#dc2626'}; background: ${a.status === 'info_requested' ? '#fffbeb' : '#fef2f2'}; border-radius: 10px; padding: 10px 12px; line-height: 1.5;">
+                        <b>${a.status === 'info_requested' ? 'Info requested' : 'Rejection reason'}:</b> ${esc(a.admin_note)}
+                    </div>` : '';
+
+                const appealNote = a.status === 'appealed' && a.citizen_note ? `
+                    <div style="flex-basis: 100%; font-size: 12.5px; color: #0369a1; background: #e0f2fe; border-radius: 10px; padding: 10px 12px; line-height: 1.5;">
+                        <b>Citizen's appeal:</b> ${esc(a.citizen_note)}
                     </div>` : '';
 
                 const u = a.users || {};
@@ -272,6 +293,7 @@
                     <div class="actions">
                         ${detailsBlock}
                         ${noteBlock}
+                        ${appealNote}
                         <button class="act-btn act-approve" data-id="${a.id}" data-action="approved" ${decided || a.status === 'approved' || a.status === 'for_pickup' ? 'disabled' : ''}>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
                             Approve
@@ -298,7 +320,7 @@
         async function load() {
             const { data, error } = await supabase
                 .from('applications')
-                .select('id, status, applied_at, admin_note, claim_code, claim_code_expires_at, users ( full_name, phone, date_of_birth, address, email ), assistance ( program_name, agency, amount_label, requirements, documents )')
+                .select('id, status, applied_at, admin_note, citizen_note, claim_code, claim_code_expires_at, users ( full_name, phone, date_of_birth, address, email ), assistance ( program_name, agency, amount_label, requirements, documents )')
                 .order('applied_at', { ascending: false });
             if (error) {
                 console.error(error);
@@ -426,6 +448,7 @@
         async function applyStatus(app, next, note) {
             const patch = { status: next, updated_at: new Date().toISOString() };
             if (note !== undefined) patch.admin_note = note;
+            if (app.status === 'appealed') patch.citizen_note = null;
             const { error } = await supabase.from('applications').update(patch).eq('id', app.id);
             if (error) { console.error(error); return; }
 
@@ -475,6 +498,11 @@
         });
         document.getElementById('note-modal-cancel').addEventListener('click', () => noteModal.style.display = 'none');
         noteModal.addEventListener('click', (e) => { if (e.target === noteModal) noteModal.style.display = 'none'; });
+
+        document.getElementById('admin-search').addEventListener('input', (e) => {
+            searchTerm = e.target.value.trim().toLowerCase();
+            render();
+        });
 
         filtersEl.addEventListener('click', (e) => {
             const pill = e.target.closest('.f-pill');

@@ -143,6 +143,9 @@ export async function loginWithExchangeCode(exchangeCode, onStatus = () => {}) {
 
     // The SSO payload is the source of truth for profile data — carry it in
     // the session so pages never need to read the users table.
-    setSession(userId, mapped);
+    // (consent state lives in the DB, so merge it into the session snapshot)
+    const { data: consentRow } = await supabase
+        .from('users').select('consented_at').eq('id', userId).single();
+    setSession(userId, { ...mapped, consented_at: consentRow?.consented_at ?? null });
     return userId;
 }

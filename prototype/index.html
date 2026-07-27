@@ -203,6 +203,8 @@
 
     <script type="module">
         import { supabase, CURRENT_USER_ID } from './assets/js/supabase-client.js';
+        import { currentProfile } from './assets/js/session.js';
+        import { evaluate } from './assets/js/eligibility.js';
 
         const listEl = document.getElementById('benefit-list');
         const pillsEl = document.getElementById('category-pills');
@@ -227,9 +229,13 @@
         const [{ data: rows, error }, { data: myApps }] = await Promise.all([
             supabase.from('assistance').select('*')
                 .eq('user_id', CURRENT_USER_ID).order('sort_order', { ascending: true }),
-            supabase.from('applications').select('assistance_id, status')
+            supabase.from('applications').select('assistance_id, status, assistance ( category, program_name )')
                 .eq('user_id', CURRENT_USER_ID),
         ]);
+
+        // Computed eligibility (rules engine); falls back to seeded values.
+        const profile = currentProfile();
+        const verdictOf = (r) => evaluate(r, profile, myApps)?.verdict || r.eligibility_status;
 
         const appliedIds = new Set((myApps || [])
             .filter(a => !['rejected', 'expired'].includes(a.status))
@@ -241,13 +247,13 @@
         function render() {
             const visible = (rows || []).filter((r) => {
                 if (activeCategory !== 'All' && r.category !== activeCategory) return false;
-                if (activeStatus === 'eligible') return r.eligibility_status === 'eligible';
-                if (activeStatus === 'possible') return r.eligibility_status !== 'eligible';
+                if (activeStatus === 'eligible') return verdictOf(r) === 'eligible';
+                if (activeStatus === 'possible') return verdictOf(r) !== 'eligible';
                 if (activeStatus === 'applied') return appliedIds.has(r.id);
                 return true;
             }).sort((a, b) => {
                 // Eligible programs first, then possible; stable by sort_order.
-                const rank = (r) => r.eligibility_status === 'eligible' ? 0 : 1;
+                const rank = (r) => verdictOf(r) === 'eligible' ? 0 : 1;
                 return rank(a) - rank(b) || a.sort_order - b.sort_order;
             });
             if (!visible.length) {
@@ -256,7 +262,7 @@
             }
             listEl.innerHTML = visible.map((r) => {
                 const accent = r.accent_color || '#0d3b9e';
-                const isEligible = r.eligibility_status === 'eligible';
+                const isEligible = verdictOf(r) === 'eligible';
                 const statusLabel = isEligible ? 'Eligible' : 'Possible';
                 const amount = r.amount_label || r.assistance_type || '';
                 const appliedBadge = appliedIds.has(r.id)
@@ -296,8 +302,8 @@
             const inCategory = (rows || []).filter(r => activeCategory === 'All' || r.category === activeCategory);
             const counts = {
                 all: inCategory.length,
-                eligible: inCategory.filter(r => r.eligibility_status === 'eligible').length,
-                possible: inCategory.filter(r => r.eligibility_status !== 'eligible').length,
+                eligible: inCategory.filter(r => verdictOf(r) === 'eligible').length,
+                possible: inCategory.filter(r => verdictOf(r) !== 'eligible').length,
                 applied: inCategory.filter(r => appliedIds.has(r.id)).length,
             };
             filterMenu.querySelectorAll('.filter-option').forEach((opt) => {

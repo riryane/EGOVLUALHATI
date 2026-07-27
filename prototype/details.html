@@ -113,6 +113,8 @@
 
     <script type="module">
         import { supabase, CURRENT_USER_ID } from './assets/js/supabase-client.js';
+        import { currentProfile } from './assets/js/session.js';
+        import { evaluate } from './assets/js/eligibility.js';
 
         const rootEl = document.getElementById('detail-root');
         const actionEl = document.getElementById('detail-action');
@@ -139,7 +141,10 @@
                 console.error('Failed to load benefit', error);
                 rootEl.innerHTML = '<p style="padding:24px;">Benefit not found.</p>';
             } else {
-                const isEligible = r.eligibility_status === 'eligible';
+                const isEligible = (computed?.verdict || r.eligibility_status) === 'eligible';
+                const eligTitle = computed?.title || r.eligibility_title;
+                const eligDesc = computed?.desc || r.eligibility_desc;
+                const eligItems = computed?.results || r.requirements || [];
 
                 const blueCardBody = `
                     ${r.subtitle ? `<div class="blue-card-subtitle">${esc(r.subtitle)}</div>` : ''}
@@ -158,7 +163,7 @@
                         </div>
                     </div>`;
 
-                const requirements = (r.requirements || []).map((req) => `
+                const requirements = eligItems.map((req) => `
                     <div class="requirement-item">
                         <div class="requirement-icon"${req.met ? '' : ' style="color:#ef4444;"'}>
                             ${req.met ? CHECK : CROSS}
@@ -189,8 +194,8 @@
                                         : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>'}
                                 </div>
                                 <div>
-                                    <div class="status-title">${esc(r.eligibility_title)}</div>
-                                    <div class="status-desc">${esc(r.eligibility_desc)}</div>
+                                    <div class="status-title">${esc(eligTitle)}</div>
+                                    <div class="status-desc">${esc(eligDesc)}</div>
                                 </div>
                             </div>
                             <div class="requirement-list">${requirements}</div>
@@ -200,17 +205,22 @@
                 // Application state for this ayuda decides what the button does.
                 const { data: myApps } = await supabase
                     .from('applications')
-                    .select('status, updated_at, admin_note')
+                    .select('status, updated_at, admin_note, assistance_id, assistance ( category, program_name )')
                     .eq('user_id', CURRENT_USER_ID)
-                    .eq('assistance_id', r.id)
-                    .order('updated_at', { ascending: false });
+                    .order('updated_at', { ascending: false })
+                    .then(res => ({ data: (res.data || []) }));
 
-                const activeApp = (myApps || []).find(a => !['rejected', 'expired'].includes(a.status));
+                const appsForThis = myApps.filter(a => a.assistance_id === r.id);
+
+                // Computed eligibility (rules engine); falls back to seeded values.
+                const computed = evaluate(r, currentProfile(), myApps);
+
+                const activeApp = appsForThis.find(a => !['rejected', 'expired', 'appealed'].includes(a.status)) || appsForThis.find(a => a.status === 'appealed');
 
                 // Rejection cooldown: blocked from re-applying for a period after
                 // a rejection (2 minutes here for the demo; ~30 days in production).
                 const REJECT_COOLDOWN_MS = 2 * 60 * 1000;
-                const lastRejected = (myApps || []).find(a => a.status === 'rejected');
+                const lastRejected = appsForThis.find(a => a.status === 'rejected');
                 const cooldownEnds = lastRejected ? new Date(lastRejected.updated_at).getTime() + REJECT_COOLDOWN_MS : 0;
                 const rejectionLocked = !activeApp && lastRejected && Date.now() < cooldownEnds;
 

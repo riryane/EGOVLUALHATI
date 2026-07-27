@@ -272,6 +272,10 @@
 
                 <div class="no-account">Don't have eGovPH account yet?</div>
                 <a href="#" class="btn-create">Create new account</a>
+
+                <button id="btn-demo" style="display: block; width: 100%; background: none; border: none; margin-top: 6px; font-family: inherit; font-size: 13px; font-weight: 600; color: #94a3b8; cursor: pointer;">
+                    Continue in Demo Mode
+                </button>
             </div>
         </div>
 
@@ -431,6 +435,20 @@
             }
         }
 
+        // DEMO bypass: signs in as the seeded demo citizen straight from the
+        // database — for when the eGov SSO/eMessage sandbox is unreachable.
+        document.getElementById('btn-demo').addEventListener('click', async () => {
+            const { data: demoUser, error: demoErr } = await supabase
+                .from('users').select('*')
+                .eq('id', '11111111-1111-1111-1111-111111111111').single();
+            if (demoErr || !demoUser) {
+                showAlert('Demo Unavailable', 'Could not load the demo account. Check the database connection.');
+                return;
+            }
+            setSession(demoUser.id, demoUser);
+            window.location.href = 'main-dashboard.html';
+        });
+
         loginBtn.addEventListener('click', async () => {
             if (!(await sendOtp())) return;
             document.getElementById('otp-phone').textContent = '+63 ' + (phoneInput.value || '9XX XXX XXXX');
@@ -570,5 +588,6 @@
         const exchangeCode = new URLSearchParams(location.search).get('exchange_code');
         if (exchangeCode) runSso(exchangeCode);
     </script>
+    <script type="module" src="assets/js/clock.js"></script>
 </body>
 </html>

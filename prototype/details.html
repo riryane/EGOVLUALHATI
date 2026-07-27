@@ -112,7 +112,7 @@
     </div>
 
     <script type="module">
-        import { supabase } from './assets/js/supabase-client.js';
+        import { supabase, CURRENT_USER_ID } from './assets/js/supabase-client.js';
 
         const rootEl = document.getElementById('detail-root');
         const actionEl = document.getElementById('detail-action');
@@ -189,7 +189,24 @@
                         </div>
                     </div>`;
 
-                if (r.primary_action === 'Apply Now' && !isEligible) {
+                // An application already in flight (anything but rejected) blocks re-applying.
+                const { data: existingApps } = await supabase
+                    .from('applications')
+                    .select('status')
+                    .eq('user_id', CURRENT_USER_ID)
+                    .eq('assistance_id', r.id)
+                    .neq('status', 'rejected');
+
+                if (r.primary_action === 'Apply Now' && existingApps?.length) {
+                    actionEl.innerHTML = `
+                        <div style="text-align: center; font-size: 13px; color: #64748b; margin-bottom: 10px;">
+                            You already have an application for this program.
+                        </div>
+                        <a href="transactions.html" class="btn-primary" style="background: #ecfdf5; color: #10b981;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" width="18" height="18"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Already Applied — View Status
+                        </a>`;
+                } else if (r.primary_action === 'Apply Now' && !isEligible) {
                     // Possibly eligible only — application is locked.
                     actionEl.innerHTML = `
                         <div style="text-align: center; font-size: 13px; color: #64748b; margin-bottom: 10px;">
@@ -212,5 +229,6 @@
             }
         }
     </script>
+    <script type="module" src="assets/js/clock.js"></script>
 </body>
 </html>

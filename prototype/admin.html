@@ -296,20 +296,21 @@
             app.claim_code = code;
             app.claim_code_expires_at = expires;
 
+            // The code is always shown on-screen FOR DEMONSTRATION PURPOSES,
+            // whether or not the SMS goes through.
             const phone = app.users?.phone || '';
             const e164 = '+63' + phone.replace(/\D/g, '').slice(-10);
             const isTestNumber = /\+63909/.test(e164);
             try {
                 if (!isTestNumber) {
                     await sendSms(e164, `eGovPH: Your eTulong pick-up verification code is ${code}. Read it to the officer to claim your benefit. Valid for 5 minutes.`);
-                    feedback(app.id, `Code sent by SMS to ${e164}.`, true);
+                    feedback(app.id, `Code: ${code} (shown for demo) — SMS sent to ${e164}.`, true);
                 } else {
-                    // Sandbox identities have unreachable numbers — reveal for the demo.
-                    feedback(app.id, `Test account (${e164}) — demo code: ${code}`, true);
+                    feedback(app.id, `Code: ${code} (shown for demo) — test account, no SMS sent.`, true);
                 }
             } catch (err) {
-                console.error(err);
-                feedback(app.id, `SMS failed — demo code: ${code}`, false);
+                console.warn('Claim-code SMS failed', err);
+                feedback(app.id, `Code: ${code} (shown for demo) — SMS service unavailable.`, true);
             }
             btn.disabled = false;
             btn.innerHTML = btn.innerHTML.replace('Send Verification Code', 'Resend Code');

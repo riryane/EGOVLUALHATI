@@ -237,6 +237,7 @@
             </div>
             <button id="extract-continue" style="display: none; border: none; background: #1d4ed8; color: #fff; font-family: inherit; font-size: 15px; font-weight: 700; padding: 14px 32px; border-radius: 12px; cursor: pointer;">Continue</button>
             <button id="extract-retry" style="display: none; border: none; background: none; color: #94a3b8; font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer;">Retake</button>
+            <button id="extract-demo" style="display: none; border: 1px solid #475569; background: none; color: #94a3b8; font-family: inherit; font-size: 13px; font-weight: 700; padding: 10px 20px; border-radius: 10px; cursor: pointer;">Verify Anyway (Demo)</button>
         </div>
     </div>
 
@@ -340,6 +341,7 @@
             continueBtn.style.background = '#1d4ed8';
             continueBtn.onclick = finish;
             retryBtn.style.display = 'none';
+            document.getElementById('extract-demo').style.display = 'none';
             preview.style.display = 'none';
             titleEl.textContent = 'Extracting document…';
             subEl.textContent = 'Reading text from your document';
@@ -351,6 +353,13 @@
         }
         continueBtn.onclick = finish;
         retryBtn.addEventListener('click', resetOverlay);
+
+        // Demo bypass shown when the OCR service is unavailable.
+        const demoBtn = document.getElementById('extract-demo');
+        demoBtn.addEventListener('click', () => {
+            localStorage.setItem(capturedKey, '1');
+            finish();
+        });
 
         document.getElementById('capture-btn').addEventListener('click', async () => {
             const blob = await captureBlob();
@@ -391,6 +400,7 @@
                         ? 'eGov AI authentication failed. Please try again.'
                         : 'Could not read the document. Please retake the photo.';
                     retryBtn.style.display = 'inline-block';
+                    demoBtn.style.display = 'inline-block';
                 }
                 return;
             }
@@ -402,6 +412,7 @@
                 ? 'Camera unavailable — a real photo is required for OCR verification.'
                 : 'eGov AI OCR is not configured. Add the hackathon token to enable document extraction.';
             retryBtn.style.display = 'inline-block';
+            demoBtn.style.display = 'inline-block';
         });
     </script>
 </body>

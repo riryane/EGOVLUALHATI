@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agency Portal (Demo)</title>
+    <link rel="stylesheet" href="assets/css/global.css">
+    <link rel="stylesheet" href="assets/css/components.css">
+    <style>
+        .admin-header {
+            padding: 18px 24px 8px;
+        }
+        .admin-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 20px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+        .demo-badge {
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            background: #fef3c7;
+            color: #b45309;
+            padding: 3px 8px;
+            border-radius: 999px;
+            text-transform: uppercase;
+        }
+        .admin-sub {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        .app-card {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 16px;
+            margin: 0 24px 14px;
+        }
+        .app-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 4px;
+        }
+        .applicant {
+            font-size: 15px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+        .app-program {
+            font-size: 13px;
+            color: #334155;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+        .app-meta {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 2px;
+        }
+        .chip {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 999px;
+            white-space: nowrap;
+        }
+        .actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        .act-btn {
+            flex: 1;
+            min-width: 90px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            border: none;
+            font-family: inherit;
+            font-size: 12.5px;
+            font-weight: 700;
+            padding: 10px 8px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .act-btn:disabled { opacity: 0.45; cursor: default; }
+        .act-approve { background: #ecfdf5; color: #059669; }
+        .act-deny    { background: #fef2f2; color: #dc2626; }
+        .act-info    { background: #fffbeb; color: #b45309; }
+        .act-advance { background: #eff6ff; color: #1d4ed8; flex-basis: 100%; }
+        .act-btn svg { width: 14px; height: 14px; }
+
+        .filter-row {
+            display: flex;
+            gap: 8px;
+            padding: 12px 24px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .filter-row::-webkit-scrollbar { display: none; }
+        .f-pill {
+            white-space: nowrap;
+            border: 1px solid var(--border-color);
+            background: #fff;
+            font-family: inherit;
+            font-size: 12.5px;
+            font-weight: 700;
+            color: #334155;
+            padding: 8px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        .f-pill.active {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="admin-header">
+            <div class="admin-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22" style="color: var(--primary-color);"><path d="M3 21h18"></path><path d="M5 21V7l7-4 7 4v14"></path><path d="M9 21v-6h6v6"></path></svg>
+                eTulong Agency Portal
+                <span class="demo-badge">Demo</span>
+            </div>
+            <div class="admin-sub">Review citizen applications — approve, deny, or request additional information.</div>
+        </div>
+
+        <div class="filter-row" id="admin-filters">
+            <button class="f-pill active" data-status="all">All</button>
+            <button class="f-pill" data-status="pending">Pending</button>
+            <button class="f-pill" data-status="info_requested">Info Requested</button>
+            <button class="f-pill" data-status="approved">Approved</button>
+            <button class="f-pill" data-status="for_pickup">For Pick-up</button>
+            <button class="f-pill" data-status="done">Done</button>
+            <button class="f-pill" data-status="rejected">Rejected</button>
+        </div>
+
+        <div class="content-area" style="padding-bottom: 40px;">
+            <div id="admin-list"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Agency-side demo page. Not linked from the citizen app — open
+        // admin.html directly. Every decision updates the database and
+        // notifies the citizen by SMS via eMessage.
+        import { supabase } from './assets/js/supabase-client.js';
+        import { sendSms } from './assets/js/emessage.js';
+
+        const listEl = document.getElementById('admin-list');
+        const filtersEl = document.getElementById('admin-filters');
+
+        const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) =>
+            ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+        const CHIP = {
+            pending:        ['Pending',        '#b45309', '#fffbeb'],
+            info_requested: ['Info Requested', '#b45309', '#fef3c7'],
+            approved:       ['Approved',       '#1d4ed8', '#eff6ff'],
+            for_pickup:     ['For Pick-up',    '#7c3aed', '#f5f3ff'],
+            done:           ['Done',           '#059669', '#ecfdf5'],
+            rejected:       ['Rejected',       '#dc2626', '#fef2f2'],
+        };
+
+        const SMS = {
+            approved:       (p) => `eGovPH: Good news! Your ${p} application has been APPROVED. We will notify you when it is ready for pick-up.`,
+            rejected:       (p) => `eGovPH: We're sorry — your ${p} application was NOT APPROVED. You may re-apply once you meet the requirements.`,
+            info_requested: (p) => `eGovPH: Your ${p} application needs ADDITIONAL INFORMATION. Please open the eGovPH app to review the request.`,
+            for_pickup:     (p) => `eGovPH: Your ${p} benefit is READY FOR PICK-UP at the designated distribution point. Bring your Digital ID.`,
+            done:           (p) => `eGovPH: Your ${p} application is now COMPLETED. Thank you for using eGovPH eTulong.`,
+        };
+
+        const fmtDate = (d) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+        let apps = [];
+        let activeFilter = 'all';
+
+        function render() {
+            const visible = activeFilter === 'all' ? apps : apps.filter(a => a.status === activeFilter);
+            if (!visible.length) {
+                listEl.innerHTML = '<p style="padding: 16px 24px; color: #64748b;">No applications in this view.</p>';
+                return;
+            }
+            listEl.innerHTML = visible.map(a => {
+                const [label, color, bg] = CHIP[a.status] || CHIP.pending;
+                const decided = ['done', 'rejected'].includes(a.status);
+                const advance = a.status === 'approved' ? ['for_pickup', 'Mark as For Pick-up']
+                              : a.status === 'for_pickup' ? ['done', 'Mark as Done / Claimed']
+                              : null;
+                return `
+                <div class="app-card">
+                    <div class="app-card-top">
+                        <div>
+                            <div class="applicant">${esc(a.users?.full_name || 'Unknown Citizen')}</div>
+                            <div class="app-program">${esc(a.assistance?.program_name || '')}</div>
+                            <div class="app-meta">${esc(a.assistance?.agency || '')} • Applied ${fmtDate(a.applied_at)}</div>
+                        </div>
+                        <span class="chip" style="color: ${color}; background: ${bg};">${label}</span>
+                    </div>
+                    <div class="actions">
+                        <button class="act-btn act-approve" data-id="${a.id}" data-action="approved" ${decided || a.status === 'approved' || a.status === 'for_pickup' ? 'disabled' : ''}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Approve
+                        </button>
+                        <button class="act-btn act-deny" data-id="${a.id}" data-action="rejected" ${decided ? 'disabled' : ''}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            Deny
+                        </button>
+                        <button class="act-btn act-info" data-id="${a.id}" data-action="info_requested" ${decided || a.status !== 'pending' ? 'disabled' : ''}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                            Request Info
+                        </button>
+                        ${advance ? `
+                        <button class="act-btn act-advance" data-id="${a.id}" data-action="${advance[0]}">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            ${advance[1]}
+                        </button>` : ''}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        async function load() {
+            const { data, error } = await supabase
+                .from('applications')
+                .select('id, status, applied_at, users ( full_name, phone ), assistance ( program_name, agency )')
+                .order('applied_at', { ascending: false });
+            if (error) {
+                console.error(error);
+                listEl.innerHTML = '<p style="padding: 16px 24px; color: #64748b;">Could not load applications.</p>';
+                return;
+            }
+            apps = data;
+            render();
+        }
+
+        listEl.addEventListener('click', async (e) => {
+            const btn = e.target.closest('.act-btn');
+            if (!btn || btn.disabled) return;
+            const app = apps.find(a => a.id === btn.dataset.id);
+            const next = btn.dataset.action;
+            if (!app || !next) return;
+
+            btn.disabled = true;
+            const { error } = await supabase.from('applications')
+                .update({ status: next, updated_at: new Date().toISOString() })
+                .eq('id', app.id);
+            if (error) { console.error(error); btn.disabled = false; return; }
+
+            app.status = next;
+            render();
+
+            // Notify the citizen by SMS (fire-and-forget).
+            const phone = app.users?.phone;
+            if (phone && SMS[next]) {
+                const e164 = '+63' + phone.replace(/\D/g, '').slice(-10);
+                sendSms(e164, SMS[next](app.assistance?.program_name || 'ayuda'))
+                    .catch(err => console.warn('Status SMS failed', err));
+            }
+        });
+
+        filtersEl.addEventListener('click', (e) => {
+            const pill = e.target.closest('.f-pill');
+            if (!pill) return;
+            filtersEl.querySelectorAll('.f-pill').forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            activeFilter = pill.dataset.status;
+            render();
+        });
+
+        load();
+    </script>
+</body>
+</html>

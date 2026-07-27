@@ -78,6 +78,7 @@
             <div class="filters" id="status-filters" style="flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none;">
                 <a href="#" class="filter-pill active" data-status="all">All</a>
                 <a href="#" class="filter-pill" data-status="pending">Pending</a>
+                <a href="#" class="filter-pill" data-status="info_requested">Info Requested</a>
                 <a href="#" class="filter-pill" data-status="approved">Approved</a>
                 <a href="#" class="filter-pill" data-status="for_pickup">For Pick-up</a>
                 <a href="#" class="filter-pill" data-status="done">Done</a>
@@ -152,6 +153,8 @@
         const STATUS = {
             pending:    { label: 'Pending',     color: '#f59e0b', bg: '#fffbeb',
                 icon: '<circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>' },
+            info_requested: { label: 'Info Requested', color: '#b45309', bg: '#fef3c7',
+                icon: '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>' },
             approved:   { label: 'Approved',    color: '#3b82f6', bg: '#eff6ff',
                 icon: '<polyline points="20 6 9 17 4 12"></polyline>' },
             rejected:   { label: 'Rejected',    color: '#ef4444', bg: '#fef2f2',
@@ -209,7 +212,7 @@
             document.getElementById('sum-total').textContent = apps.length;
             document.getElementById('sum-done').textContent = apps.filter(a => a.status === 'done').length;
             document.getElementById('sum-active').textContent =
-                apps.filter(a => ['pending', 'approved', 'for_pickup'].includes(a.status)).length;
+                apps.filter(a => ['pending', 'info_requested', 'approved', 'for_pickup'].includes(a.status)).length;
             render('all');
 
             filtersEl.addEventListener('click', (e) => {
@@ -246,7 +249,7 @@
                 app.status = next;
                 document.getElementById('sum-done').textContent = apps.filter(a => a.status === 'done').length;
                 document.getElementById('sum-active').textContent =
-                    apps.filter(a => ['pending', 'approved', 'for_pickup'].includes(a.status)).length;
+                    apps.filter(a => ['pending', 'info_requested', 'approved', 'for_pickup'].includes(a.status)).length;
                 render(filtersEl.querySelector('.filter-pill.active')?.dataset.status || 'all');
 
                 // Status notification SMS (fire-and-forget).

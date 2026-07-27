@@ -180,30 +180,51 @@
             listEl.innerHTML = visible.map(a => {
                 const s = STATUS[a.status] || STATUS.pending;
                 const prog = a.assistance || {};
+
+                const noteBlock = a.admin_note && ['rejected', 'info_requested'].includes(a.status) ? `
+                    <div style="margin: 0 24px 8px; font-size: 12.5px; line-height: 1.5; padding: 10px 12px; border-radius: 10px;
+                        color: ${a.status === 'rejected' ? '#b91c1c' : '#b45309'};
+                        background: ${a.status === 'rejected' ? '#fef2f2' : '#fffbeb'};">
+                        <b>${a.status === 'rejected' ? 'Reason' : 'Requested'}:</b> ${esc(a.admin_note)}
+                    </div>` : '';
+
+                const infoAction = a.status === 'info_requested' ? `
+                    <div style="margin: 0 24px 14px;">
+                        <a href="camera.html?flow=info&app=${encodeURIComponent(a.id)}&name=${encodeURIComponent('Additional Supporting Document')}"
+                           style="display: flex; align-items: center; justify-content: center; gap: 8px; background: #b45309; color: #fff; font-size: 13.5px; font-weight: 700; text-decoration: none; padding: 12px; border-radius: 12px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                            Submit Additional Info
+                        </a>
+                    </div>` : '';
+
                 return `
-                <div class="transaction-item">
-                    <div class="tx-icon" style="color: ${s.color}; background-color: ${s.bg};">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">${s.icon}</svg>
-                    </div>
-                    <div class="tx-details">
-                        <div class="tx-title">${esc(prog.program_name || 'Ayuda Application')}</div>
-                        <div class="tx-subtitle">${esc(prog.agency || '')} • Applied ${fmtDate(a.applied_at)}</div>
-                        ${a.status === 'for_pickup' ? '<div class="tx-subtitle" style="color: #8b5cf6; font-weight: 600;">You will receive an SMS code at the counter to claim</div>' : ''}
-                    </div>
-                    <div class="tx-amount-col">
-                        <div class="tx-amount" style="color: ${s.color};">${esc(prog.amount_label || prog.assistance_type || '')}</div>
-                        <div class="tx-status" style="color: ${s.color};">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">${s.icon}</svg>
-                            ${s.label}
+                <div>
+                    <div class="transaction-item">
+                        <div class="tx-icon" style="color: ${s.color}; background-color: ${s.bg};">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">${s.icon}</svg>
+                        </div>
+                        <div class="tx-details">
+                            <div class="tx-title">${esc(prog.program_name || 'Ayuda Application')}</div>
+                            <div class="tx-subtitle">${esc(prog.agency || '')} • Applied ${fmtDate(a.applied_at)}</div>
+                            ${a.status === 'for_pickup' ? '<div class="tx-subtitle" style="color: #8b5cf6; font-weight: 600;">You will receive an SMS code at the counter to claim</div>' : ''}
+                        </div>
+                        <div class="tx-amount-col">
+                            <div class="tx-amount" style="color: ${s.color};">${esc(prog.amount_label || prog.assistance_type || '')}</div>
+                            <div class="tx-status" style="color: ${s.color};">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">${s.icon}</svg>
+                                ${s.label}
+                            </div>
                         </div>
                     </div>
+                    ${noteBlock}
+                    ${infoAction}
                 </div>`;
             }).join('');
         }
 
         const { data, error } = await supabase
             .from('applications')
-            .select('id, status, applied_at, assistance ( program_name, agency, amount_label, assistance_type )')
+            .select('id, status, applied_at, admin_note, assistance ( program_name, agency, amount_label, assistance_type )')
             .eq('user_id', CURRENT_USER_ID)
             .order('applied_at', { ascending: false });
 

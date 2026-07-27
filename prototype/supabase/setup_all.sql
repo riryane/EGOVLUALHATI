@@ -70,7 +70,8 @@ create table applications (
   applied_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now(),
   claim_code            text,
-  claim_code_expires_at timestamptz
+  claim_code_expires_at timestamptz,
+  admin_note            text
 );
 
 -- MVP: no row level security anywhere.

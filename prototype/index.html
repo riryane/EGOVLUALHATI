@@ -212,6 +212,11 @@
 
         const CHECK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>';
         const INFO_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
+        const AGENCY_LOGOS = {
+            'DSWD': 'https://commons.wikimedia.org/wiki/Special:FilePath/Department%20of%20Social%20Welfare%20and%20Development.png?width=120',
+            'DOLE': 'https://commons.wikimedia.org/wiki/Special:FilePath/Department%20of%20Labor%20and%20Employment%20%28DOLE%29.svg?width=120',
+            'CHED': 'https://commons.wikimedia.org/wiki/Special:FilePath/Commission%20on%20Higher%20Education%20%28CHEd%29.svg?width=120',
+        };
         const HEART_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>';
 
         const filterDd = document.getElementById('filter-dd');
@@ -260,7 +265,9 @@
                 return `
                 <a href="details.html?id=${encodeURIComponent(r.id)}" class="benefit-card">
                     <div class="card-icon" style="color: ${accent}; background-color: ${accent}1a;">
-                        ${HEART_ICON}
+                        ${AGENCY_LOGOS[r.agency]
+                            ? `<img src="${AGENCY_LOGOS[r.agency]}" alt="${esc(r.agency)}" style="width: 40px; height: 40px; object-fit: contain;" onerror="this.remove()">`
+                            : HEART_ICON}
                     </div>
                     <div class="card-content">
                         <div class="card-top">

@@ -245,13 +245,18 @@
         // Real camera feed + eGov AI Document Extractor OCR.
         // Falls back to a mock sequence when the AI token isn't configured.
         import { extractDocument, isOcrConfigured } from './assets/js/egov-ai.js';
+        import { supabase } from './assets/js/supabase-client.js';
 
         const params = new URLSearchParams(location.search);
         const ayudaId = params.get('id');
         const docName = params.get('name') || 'Document';
+        // Info round-trip: capturing for an agency "additional info" request.
+        const infoAppId = params.get('flow') === 'info' ? params.get('app') : null;
         // Keyed by document name — a captured doc counts for every ayuda needing it.
         const capturedKey = `captured_doc_${docName.toLowerCase().replace(/[^a-z0-9]+/g, '_')}`;
-        const returnUrl = ayudaId
+        const returnUrl = infoAppId
+            ? 'transactions.html'
+            : ayudaId
             ? `document-requirements.html?id=${encodeURIComponent(ayudaId)}`
             : 'document-requirements.html';
 
@@ -347,7 +352,15 @@
             subEl.textContent = 'Reading text from your document';
         }
 
-        function finish() {
+        async function finish() {
+            // Info round-trip: submitting the requested document sends the
+            // application back to the agency's Pending queue.
+            if (infoAppId) {
+                const { error } = await supabase.from('applications')
+                    .update({ status: 'pending', admin_note: null, updated_at: new Date().toISOString() })
+                    .eq('id', infoAppId);
+                if (error) console.error('Failed to resubmit application', error);
+            }
             if (stream) stream.getTracks().forEach(t => t.stop());
             window.location.href = returnUrl;
         }

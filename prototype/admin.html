@@ -145,6 +145,7 @@
             <button class="f-pill" data-status="for_pickup">For Pick-up</button>
             <button class="f-pill" data-status="done">Done</button>
             <button class="f-pill" data-status="rejected">Rejected</button>
+            <button class="f-pill" data-status="expired">Expired</button>
         </div>
 
         <div class="content-area" style="padding-bottom: 40px;">
@@ -172,6 +173,7 @@
             for_pickup:     ['For Pick-up',    '#7c3aed', '#f5f3ff'],
             done:           ['Done',           '#059669', '#ecfdf5'],
             rejected:       ['Rejected',       '#dc2626', '#fef2f2'],
+            expired:        ['Expired',        '#64748b', '#f1f5f9'],
         };
 
         const SMS = {
@@ -180,6 +182,7 @@
             info_requested: (p) => `eGovPH: Your ${p} application needs ADDITIONAL INFORMATION. Please open the eGovPH app to review the request.`,
             for_pickup:     (p) => `eGovPH: Your ${p} benefit is READY FOR PICK-UP at the designated distribution point. Bring your Digital ID.`,
             done:           (p) => `eGovPH: Your ${p} application is now COMPLETED. Thank you for using eGovPH eTulong.`,
+            expired:        (p) => `eGovPH: Your ${p} benefit cycle has ended. You are now eligible to APPLY AGAIN for the next cycle through the eGovPH app.`,
         };
 
         const fmtDate = (d) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -195,9 +198,10 @@
             }
             listEl.innerHTML = visible.map(a => {
                 const [label, color, bg] = CHIP[a.status] || CHIP.pending;
-                const decided = ['done', 'rejected'].includes(a.status);
+                const decided = ['done', 'rejected', 'expired'].includes(a.status);
                 const advance = a.status === 'approved' ? ['for_pickup', 'Mark as For Pick-up']
-                              : a.status === 'for_pickup' ? ['done', 'Mark as Done / Claimed']
+                              : a.status === 'for_pickup' ? ['done', 'Confirm Pick-up / Claimed']
+                              : a.status === 'done' ? ['expired', 'Reset Cycle — Allow Re-Application']
                               : null;
                 return `
                 <div class="app-card">

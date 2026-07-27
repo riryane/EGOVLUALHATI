@@ -226,7 +226,9 @@
                 .eq('user_id', CURRENT_USER_ID),
         ]);
 
-        const appliedIds = new Set((myApps || []).map(a => a.assistance_id));
+        const appliedIds = new Set((myApps || [])
+            .filter(a => !['rejected', 'expired'].includes(a.status))
+            .map(a => a.assistance_id));
 
         let activeCategory = 'All';
         let activeStatus = 'all';

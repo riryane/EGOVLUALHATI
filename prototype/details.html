@@ -195,7 +195,7 @@
                     .select('status')
                     .eq('user_id', CURRENT_USER_ID)
                     .eq('assistance_id', r.id)
-                    .neq('status', 'rejected');
+                    .not('status', 'in', '(rejected,expired)');
 
                 if (r.primary_action === 'Apply Now' && existingApps?.length) {
                     actionEl.innerHTML = `

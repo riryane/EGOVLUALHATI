@@ -2,8 +2,8 @@
 // Fill in your project URL + anon key after creating the Supabase project.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-export const SUPABASE_URL = 'https://ukmznrvlufbjagssxpyu.supabase.co';
-export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrbXpucnZsdWZiamFnc3N4cHl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2Mzg3NDksImV4cCI6MjEwMDIxNDc0OX0.uLtU5DhEN0NXJ8OVO5lVP6hXQkbrxvEdLCnUV3UzOoY';
+export const SUPABASE_URL = 'https://pjevutciiwusvfmaooom.supabase.co';
+export const SUPABASE_ANON_KEY = 'sb_publishable_5hZIWJqcsoTrJfdCKw40kg_QppyOu3D';
 
 // The active session: login (SSO or OTP) stores the matched users.id here.
 // No hardcoded fallback — pages guard with requireSession() (see session.js).

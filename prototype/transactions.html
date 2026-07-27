@@ -83,10 +83,12 @@
                 <a href="#" class="filter-pill" data-status="for_pickup">For Pick-up</a>
                 <a href="#" class="filter-pill" data-status="done">Done</a>
                 <a href="#" class="filter-pill" data-status="rejected">Rejected</a>
+                <a href="#" class="filter-pill" data-status="expired">Expired</a>
             </div>
 
             <div class="transaction-list" id="app-list"></div>
         </div>
+
 
         <div class="dash-bottom-nav">
             <a href="main-dashboard.html" class="dash-nav-item">
@@ -141,8 +143,6 @@
 
     <script type="module">
         import { supabase, CURRENT_USER_ID } from './assets/js/supabase-client.js';
-        import { currentProfile } from './assets/js/session.js';
-        import { sendSms } from './assets/js/emessage.js';
 
         const listEl = document.getElementById('app-list');
         const filtersEl = document.getElementById('status-filters');
@@ -159,6 +159,8 @@
                 icon: '<polyline points="20 6 9 17 4 12"></polyline>' },
             rejected:   { label: 'Rejected',    color: '#ef4444', bg: '#fef2f2',
                 icon: '<line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>' },
+            expired:    { label: 'Expired',     color: '#64748b', bg: '#f1f5f9',
+                icon: '<circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>' },
             for_pickup: { label: 'For Pick-up', color: '#8b5cf6', bg: '#f5f3ff',
                 icon: '<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.29 7 12 12 20.71 7"></polyline><line x1="12" y1="22" x2="12" y2="12"></line>' },
             done:       { label: 'Done',        color: '#10b981', bg: '#ecfdf5',
@@ -189,7 +191,7 @@
                     </div>
                     <div class="tx-amount-col">
                         <div class="tx-amount" style="color: ${s.color};">${esc(prog.amount_label || prog.assistance_type || '')}</div>
-                        <div class="tx-status demo-status" data-app-id="${a.id}" style="color: ${s.color}; cursor: pointer;" title="Demo: tap to advance status">
+                        <div class="tx-status" style="color: ${s.color};">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">${s.icon}</svg>
                             ${s.label}
                         </div>
@@ -224,42 +226,6 @@
                 render(pill.dataset.status);
             });
 
-            // DEMO control: tapping a status chip advances the lifecycle
-            // (pending → approved → for_pickup → done) and notifies the
-            // citizen by SMS through eMessage — like the agency would.
-            const NEXT_STATUS = { pending: 'approved', approved: 'for_pickup', for_pickup: 'done' };
-            const SMS_TEXT = {
-                approved:   (p) => `eGovPH: Good news! Your ${p} application has been APPROVED. We will notify you when it is ready for pick-up.`,
-                for_pickup: (p) => `eGovPH: Your ${p} benefit is READY FOR PICK-UP. Please claim it at the designated distribution point. Bring your Digital ID.`,
-                done:       (p) => `eGovPH: Your ${p} application is now COMPLETED. Thank you for using eGovPH eTulong.`,
-            };
-
-            listEl.addEventListener('click', async (e) => {
-                const chip = e.target.closest('.demo-status');
-                if (!chip) return;
-                const app = apps.find(a => a.id === chip.dataset.appId);
-                const next = app && NEXT_STATUS[app.status];
-                if (!next) return;
-
-                const { error: upErr } = await supabase.from('applications')
-                    .update({ status: next, updated_at: new Date().toISOString() })
-                    .eq('id', app.id);
-                if (upErr) { console.error(upErr); return; }
-
-                app.status = next;
-                document.getElementById('sum-done').textContent = apps.filter(a => a.status === 'done').length;
-                document.getElementById('sum-active').textContent =
-                    apps.filter(a => ['pending', 'info_requested', 'approved', 'for_pickup'].includes(a.status)).length;
-                render(filtersEl.querySelector('.filter-pill.active')?.dataset.status || 'all');
-
-                // Status notification SMS (fire-and-forget).
-                const phone = currentProfile()?.phone;
-                if (phone) {
-                    const e164 = '+63' + phone.replace(/\D/g, '').slice(-10);
-                    sendSms(e164, SMS_TEXT[next](app.assistance?.program_name || 'ayuda'))
-                        .catch(err => console.warn('Status SMS failed', err));
-                }
-            });
         }
     </script>
     <script type="module" src="assets/js/clock.js"></script>

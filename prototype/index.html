@@ -56,7 +56,13 @@
                 </a>
             </div>
 
-            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 24px; margin-top: 8px;">
+            <div style="padding: 0 24px; margin-top: 4px; position: relative;">
+                <input type="text" id="benefit-search" placeholder="Search ayuda programs"
+                    style="width: 100%; box-sizing: border-box; border: 1px solid var(--border-color); border-radius: 12px; padding: 13px 42px 13px 14px; font-family: inherit; font-size: 14.5px; color: var(--text-main); outline: none;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="2" width="19" height="19" style="position: absolute; right: 40px; top: 50%; transform: translateY(-50%);"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 24px; margin-top: 14px;">
                 <div class="section-title">Categories</div>
                 <a href="transactions.html" style="display: inline-flex; align-items: center; gap: 6px; text-decoration: none; background: #eff4ff; color: var(--primary-color); font-size: 13px; font-weight: 700; padding: 9px 14px; border-radius: 20px;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
@@ -243,9 +249,14 @@
 
         let activeCategory = 'All';
         let activeStatus = 'all';
+        let searchTerm = '';
 
         function render() {
             const visible = (rows || []).filter((r) => {
+                if (searchTerm) {
+                    const hay = `${r.program_name} ${r.agency} ${r.description || ''} ${r.category || ''}`.toLowerCase();
+                    if (!hay.includes(searchTerm)) return false;
+                }
                 if (activeCategory !== 'All' && r.category !== activeCategory) return false;
                 if (activeStatus === 'eligible') return verdictOf(r) === 'eligible';
                 if (activeStatus === 'possible') return verdictOf(r) !== 'eligible';
@@ -326,6 +337,11 @@
                 pill.classList.add('active');
                 activeCategory = pill.dataset.category;
                 updateCounts();
+                render();
+            });
+
+            document.getElementById('benefit-search').addEventListener('input', (e) => {
+                searchTerm = e.target.value.trim().toLowerCase();
                 render();
             });
 

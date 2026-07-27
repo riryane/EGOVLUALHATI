@@ -179,6 +179,7 @@
         // notifies the citizen by SMS via eMessage.
         import { supabase } from './assets/js/supabase-client.js';
         import { sendSms } from './assets/js/emessage.js';
+        import { evaluate } from './assets/js/eligibility.js';
 
         const listEl = document.getElementById('admin-list');
         const filtersEl = document.getElementById('admin-filters');
@@ -243,8 +244,20 @@
                     </div>` : '';
 
                 const u = a.users || {};
-                const req = a.assistance?.requirements || [];
-                const docs = a.assistance?.documents || [];
+                // Eligibility computed for THIS applicant by the rules engine
+                // (their profile + their other applications); falls back to the
+                // program's seeded requirement list.
+                const applicantApps = apps.filter(x => x.user_id === a.user_id);
+                const computed = a.assistance ? evaluate(
+                    a.assistance, u,
+                    applicantApps.map(x => ({ status: x.status, assistance_id: x.assistance_id, assistance: x.assistance }))
+                ) : null;
+                const req = computed?.results || a.assistance?.requirements || [];
+
+                // Documents: the snapshot the citizen SUBMITTED wins; otherwise
+                // the program's catalog defaults.
+                const docs = a.submitted_documents || a.assistance?.documents || [];
+                const docsLabel = a.submitted_documents ? 'Documents (as submitted)' : 'Documents (program checklist)';
                 const detailsBlock = `
                     <div class="citizen-details" data-id="${a.id}" style="display: none; flex-basis: 100%; background: #f8fafc; border-radius: 12px; padding: 14px; font-size: 12.5px; color: #334155; line-height: 1.7;">
                         <b style="color: #0f172a;">Applicant Information</b><br>
@@ -252,10 +265,10 @@
                         Birth date: ${u.date_of_birth ? esc(u.date_of_birth) : '—'} • Phone: ${esc(u.phone || '—')}<br>
                         Email: ${esc(u.email || '—')}<br>
                         Address: ${esc(u.address || '—')}<br>
-                        <b style="color: #0f172a; display: block; margin-top: 8px;">Eligibility</b>
+                        <b style="color: #0f172a; display: block; margin-top: 8px;">Eligibility${computed ? ` — ${computed.title}` : ''}</b>
                         ${req.map(r0 => `${r0.met ? '✓' : '✗'} ${esc(r0.text)}`).join('<br>') || '—'}
-                        <b style="color: #0f172a; display: block; margin-top: 8px;">Documents</b>
-                        ${docs.map(d => `${d.verified ? '✓ verified' : '◻ to capture'} — ${esc(d.name)}${d.source ? ' (' + esc(d.source) + ')' : ''}`).join('<br>') || 'No documents required'}
+                        <b style="color: #0f172a; display: block; margin-top: 8px;">${docsLabel}</b>
+                        ${docs.map(d => `${d.verified ? '✓ verified' : '◻ not submitted'} — ${esc(d.name)}${(d.via || d.source) ? ' (' + esc(d.via || d.source) + ')' : ''}`).join('<br>') || 'No documents required'}
                     </div>`;
 
                 // For Pick-up: two-factor claim — a fresh SMS code confirms
@@ -320,7 +333,7 @@
         async function load() {
             const { data, error } = await supabase
                 .from('applications')
-                .select('id, status, applied_at, admin_note, citizen_note, claim_code, claim_code_expires_at, users ( full_name, phone, date_of_birth, address, email ), assistance ( program_name, agency, amount_label, requirements, documents )')
+                .select('id, status, applied_at, admin_note, citizen_note, claim_code, claim_code_expires_at, submitted_documents, user_id, assistance_id, users ( full_name, phone, date_of_birth, address, email ), assistance ( id, program_name, agency, category, amount_label, requirements, documents, rules )')
                 .order('applied_at', { ascending: false });
             if (error) {
                 console.error(error);

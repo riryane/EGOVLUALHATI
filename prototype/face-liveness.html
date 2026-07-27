@@ -281,10 +281,23 @@
             titleEl.textContent = 'Verified';
             subEl.textContent = `Liveness confirmed (${result.confidence_score.toFixed(1)}% confidence)`;
 
-            // Record the application (status: pending).
+            // Record the application (status: pending) with a snapshot of the
+            // citizen's document evidence at the moment of submission.
             if (ayudaId && CURRENT_USER_ID) {
+                let snapshot = null;
+                const { data: ayudaRow } = await supabase
+                    .from('assistance').select('documents').eq('id', ayudaId).single();
+                if (ayudaRow?.documents) {
+                    snapshot = ayudaRow.documents.map(d => {
+                        const key = `captured_doc_${d.name.toLowerCase().replace(/[^a-z0-9]+/g, '_')}`;
+                        const captured = !d.verified && localStorage.getItem(key) === '1';
+                        return { name: d.name, verified: d.verified || captured,
+                                 via: d.verified ? (d.source || 'eGov') : (captured ? 'Camera (OCR)' : null) };
+                    });
+                }
                 const { error: appError } = await supabase.from('applications')
-                    .insert({ user_id: CURRENT_USER_ID, assistance_id: ayudaId, status: 'pending' });
+                    .insert({ user_id: CURRENT_USER_ID, assistance_id: ayudaId, status: 'pending',
+                              submitted_documents: snapshot });
                 if (appError) console.error('Failed to record application', appError);
             }
             setTimeout(() => successOverlay.classList.add('show'), 700);

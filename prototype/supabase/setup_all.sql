@@ -74,7 +74,8 @@ create table applications (
   claim_code            text,
   claim_code_expires_at timestamptz,
   admin_note            text,
-  citizen_note          text
+  citizen_note          text,
+  submitted_documents   jsonb
 );
 
 -- MVP: no row level security anywhere.

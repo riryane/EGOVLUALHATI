@@ -4,6 +4,7 @@
 alter table assistance   add column if not exists rules jsonb default '[]'::jsonb;
 alter table users        add column if not exists consented_at timestamptz;
 alter table applications add column if not exists citizen_note text,
+                         add column if not exists submitted_documents jsonb,
                          add column if not exists claim_code text,
                          add column if not exists claim_code_expires_at timestamptz,
                          add column if not exists admin_note text;

@@ -68,7 +68,9 @@ create table applications (
   status        text not null default 'pending',
   -- pending | info_requested | approved | rejected | for_pickup | done
   applied_at    timestamptz not null default now(),
-  updated_at    timestamptz not null default now()
+  updated_at    timestamptz not null default now(),
+  claim_code            text,
+  claim_code_expires_at timestamptz
 );
 
 -- MVP: no row level security anywhere.

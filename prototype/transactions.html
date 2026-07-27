@@ -188,6 +188,7 @@
                     <div class="tx-details">
                         <div class="tx-title">${esc(prog.program_name || 'Ayuda Application')}</div>
                         <div class="tx-subtitle">${esc(prog.agency || '')} • Applied ${fmtDate(a.applied_at)}</div>
+                        ${a.status === 'for_pickup' ? '<div class="tx-subtitle" style="color: #8b5cf6; font-weight: 600;">You will receive an SMS code at the counter to claim</div>' : ''}
                     </div>
                     <div class="tx-amount-col">
                         <div class="tx-amount" style="color: ${s.color};">${esc(prog.amount_label || prog.assistance_type || '')}</div>

@@ -384,7 +384,12 @@
                     console.error(err);
                     spinner.style.display = 'none';
                     titleEl.textContent = 'Extraction Failed';
-                    subEl.textContent = 'Could not read the document. Please retake the photo.';
+                    const msg = String(err.message || '');
+                    subEl.textContent = (msg.includes('503') || msg.includes('not currently available'))
+                        ? 'The eGov AI service is temporarily unavailable. Please try again later.'
+                        : (msg.includes('401') || msg.includes('token'))
+                        ? 'eGov AI authentication failed. Please try again.'
+                        : 'Could not read the document. Please retake the photo.';
                     retryBtn.style.display = 'inline-block';
                 }
                 return;

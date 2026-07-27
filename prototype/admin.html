@@ -200,9 +200,28 @@
                 const [label, color, bg] = CHIP[a.status] || CHIP.pending;
                 const decided = ['done', 'rejected', 'expired'].includes(a.status);
                 const advance = a.status === 'approved' ? ['for_pickup', 'Mark as For Pick-up']
-                              : a.status === 'for_pickup' ? ['done', 'Confirm Pick-up / Claimed']
                               : a.status === 'done' ? ['expired', 'Reset Cycle — Allow Re-Application']
                               : null;
+
+                // For Pick-up: two-factor claim — a fresh SMS code confirms
+                // the claimant possesses the registered mobile number.
+                const pickupBlock = a.status === 'for_pickup' ? `
+                    <div style="flex-basis: 100%; background: #f8fafc; border: 1px dashed var(--border-color); border-radius: 12px; padding: 12px;">
+                        <div style="font-size: 11.5px; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.4px;">Pick-up verification</div>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button class="act-btn act-advance send-code-btn" data-id="${a.id}" style="flex-basis: auto; flex: 1;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2L11 13"></path><path d="M22 2l-7 20-4-9-9-4 20-7z"></path></svg>
+                                ${a.claim_code ? 'Resend Code' : 'Send Verification Code'}
+                            </button>
+                            <input class="code-input" data-id="${a.id}" maxlength="6" inputmode="numeric" placeholder="6-digit code"
+                                style="flex: 1; min-width: 110px; border: 1px solid var(--border-color); border-radius: 10px; padding: 10px 12px; font-family: inherit; font-size: 13px; font-weight: 700; letter-spacing: 2px; outline: none;">
+                            <button class="act-btn act-approve confirm-code-btn" data-id="${a.id}" style="flex-basis: auto; flex: 1;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                Confirm Pick-up
+                            </button>
+                        </div>
+                        <div class="code-feedback" data-id="${a.id}" style="font-size: 12px; font-weight: 600; margin-top: 8px; display: none;"></div>
+                    </div>` : '';
                 return `
                 <div class="app-card">
                     <div class="app-card-top">
@@ -231,6 +250,7 @@
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"></polyline></svg>
                             ${advance[1]}
                         </button>` : ''}
+                        ${pickupBlock}
                     </div>
                 </div>`;
             }).join('');
@@ -239,7 +259,7 @@
         async function load() {
             const { data, error } = await supabase
                 .from('applications')
-                .select('id, status, applied_at, users ( full_name, phone ), assistance ( program_name, agency )')
+                .select('id, status, applied_at, claim_code, claim_code_expires_at, users ( full_name, phone ), assistance ( program_name, agency )')
                 .order('applied_at', { ascending: false });
             if (error) {
                 console.error(error);
@@ -250,7 +270,94 @@
             render();
         }
 
+        const CODE_TTL_MS = 5 * 60 * 1000;
+
+        function feedback(appId, msg, ok) {
+            const el = listEl.querySelector(`.code-feedback[data-id="${appId}"]`);
+            if (!el) return;
+            el.textContent = msg;
+            el.style.color = ok ? '#059669' : '#dc2626';
+            el.style.display = 'block';
+        }
+
+        async function sendClaimCode(app, btn) {
+            btn.disabled = true;
+            const code = String(Math.floor(100000 + Math.random() * 900000));
+            const expires = new Date(Date.now() + CODE_TTL_MS).toISOString();
+            const { error } = await supabase.from('applications')
+                .update({ claim_code: code, claim_code_expires_at: expires })
+                .eq('id', app.id);
+            if (error) {
+                console.error(error);
+                feedback(app.id, 'Could not generate a code. (Has the claim_code SQL been run?)', false);
+                btn.disabled = false;
+                return;
+            }
+            app.claim_code = code;
+            app.claim_code_expires_at = expires;
+
+            const phone = app.users?.phone || '';
+            const e164 = '+63' + phone.replace(/\D/g, '').slice(-10);
+            const isTestNumber = /\+63909/.test(e164);
+            try {
+                if (!isTestNumber) {
+                    await sendSms(e164, `eGovPH: Your eTulong pick-up verification code is ${code}. Read it to the officer to claim your benefit. Valid for 5 minutes.`);
+                    feedback(app.id, `Code sent by SMS to ${e164}.`, true);
+                } else {
+                    // Sandbox identities have unreachable numbers — reveal for the demo.
+                    feedback(app.id, `Test account (${e164}) — demo code: ${code}`, true);
+                }
+            } catch (err) {
+                console.error(err);
+                feedback(app.id, `SMS failed — demo code: ${code}`, false);
+            }
+            btn.disabled = false;
+            btn.innerHTML = btn.innerHTML.replace('Send Verification Code', 'Resend Code');
+        }
+
+        async function confirmPickup(app, btn) {
+            const input = listEl.querySelector(`.code-input[data-id="${app.id}"]`);
+            const entered = (input?.value || '').trim();
+            if (entered.length !== 6) { feedback(app.id, 'Enter the 6-digit code from the citizen.', false); return; }
+
+            // Check against the freshest DB state.
+            const { data: row } = await supabase.from('applications')
+                .select('claim_code, claim_code_expires_at').eq('id', app.id).single();
+            if (!row?.claim_code) { feedback(app.id, 'No code has been sent yet.', false); return; }
+            if (new Date(row.claim_code_expires_at) < new Date()) { feedback(app.id, 'Code expired — send a new one.', false); return; }
+            if (entered !== row.claim_code) { feedback(app.id, 'Incorrect code — verify with the citizen.', false); return; }
+
+            btn.disabled = true;
+            const { error } = await supabase.from('applications')
+                .update({ status: 'done', claim_code: null, claim_code_expires_at: null, updated_at: new Date().toISOString() })
+                .eq('id', app.id);
+            if (error) { console.error(error); btn.disabled = false; return; }
+
+            app.status = 'done';
+            render();
+
+            const phone = app.users?.phone || '';
+            const e164 = '+63' + phone.replace(/\D/g, '').slice(-10);
+            if (!/\+63909/.test(e164)) {
+                sendSms(e164, SMS.done(app.assistance?.program_name || 'ayuda'))
+                    .catch(err => console.warn('Receipt SMS failed', err));
+            }
+        }
+
         listEl.addEventListener('click', async (e) => {
+            const sendBtn = e.target.closest('.send-code-btn');
+            if (sendBtn) {
+                const app = apps.find(a => a.id === sendBtn.dataset.id);
+                if (app) sendClaimCode(app, sendBtn);
+                return;
+            }
+            const confirmBtn = e.target.closest('.confirm-code-btn');
+            if (confirmBtn) {
+                const app = apps.find(a => a.id === confirmBtn.dataset.id);
+                if (app) confirmPickup(app, confirmBtn);
+                return;
+            }
+
             const btn = e.target.closest('.act-btn');
             if (!btn || btn.disabled) return;
             const app = apps.find(a => a.id === btn.dataset.id);

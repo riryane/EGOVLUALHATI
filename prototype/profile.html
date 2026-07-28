@@ -256,6 +256,9 @@
 
             <!-- ============ Other information tab ============ -->
             <div class="tab-panel hidden" id="panel-other">
+                <div id="other-info-note" style="display: none; background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; padding: 12px 14px; font-size: 13px; color: #92400e; line-height: 1.5; margin-top: 16px;">
+                    Some details are not yet recorded in your eGovPH profile. Update them through the eGovPH Super App — partner services cannot edit them.
+                </div>
                 <div class="panel-head">
                     <div class="panel-title">Other Information</div>
                     <a href="#" class="chip-btn" style="margin-top: 0;">
@@ -429,6 +432,15 @@
             set('f-occupation', u.occupation);
             set('f-industry', u.industry);
             set('f-salary', u.expected_salary);
+
+            // eGov sandbox identities vary: some records carry no
+            // additional_information at all — explain the dashes.
+            const otherFields = [u.weight_kg, u.height_cm, u.eyes_color, u.complexion,
+                u.birth_country, u.birth_province, u.birth_municipality,
+                u.occupation, u.industry, u.expected_salary, u.marital_status];
+            if (otherFields.some(v => v === null || v === undefined || v === '')) {
+                document.getElementById('other-info-note').style.display = 'block';
+            }
         }
     </script>
     <script type="module" src="assets/js/clock.js"></script>

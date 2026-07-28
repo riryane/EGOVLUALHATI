@@ -103,7 +103,7 @@ insert into users (id, full_name, location, avatar_url, email, phone, date_of_bi
    'Filipino', '123 Mabini St, Brgy. San Isidro, Quezon City, Metro Manila, Philippines',
    55, 157, 'Brown', 'Fair', 'Philippines', 'Metro Manila', 'Quezon City', 'Single',
    'Sari-sari Store Owner / Market Vendor', 'Wholesale and Retail Trade', '5,000-10,000',
-   '[{"level":"High School","school":"Quezon City High School","educational_background":"General Secondary","from":"2004","to":"2008"}]'::jsonb,
+   '[{"level":"High School","school":"Quezon City High School","educational_background":"General Secondary","from":"2004","to":"2008"},{"level":"College","school":"University of the East - Manila","educational_background":"Entrepreneurship","from":"2008","to":"2012"}]'::jsonb,
    'NATIONAL CAPITAL REGION (NCR)', 'SAN ISIDRO');
 
 insert into assistance

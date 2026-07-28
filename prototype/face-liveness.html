@@ -302,8 +302,10 @@
                     snapshot = ayudaRow.documents.map(d => {
                         const key = `captured_doc_${d.name.toLowerCase().replace(/[^a-z0-9]+/g, '_')}`;
                         const captured = !d.verified && localStorage.getItem(key) === '1';
+                        const hash = captured ? localStorage.getItem(`${key}_hash`) : null;
                         return { name: d.name, verified: d.verified || captured,
-                                 via: d.verified ? (d.source || 'eGov') : (captured ? 'Camera (OCR)' : null) };
+                                 via: d.verified ? (d.source || 'eGov') : (captured ? 'Camera (OCR)' : null),
+                                 ...(hash ? { hash } : {}) };
                     });
                 }
                 // Straight-through processing: eligibility, documents, and

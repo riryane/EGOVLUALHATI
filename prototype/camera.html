@@ -231,6 +231,7 @@
                 <div class="processing-sub" id="processing-sub">Reading text from your document</div>
             </div>
             <div id="extract-result" style="display: none; max-height: 30%; overflow-y: auto; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 14px 16px; font-size: 12.5px; line-height: 1.7; text-align: left; width: 100%; max-width: 340px;"></div>
+            <div id="verify-notes" style="display: none; width: 100%; max-width: 340px; font-size: 12px; color: #34d399; line-height: 1.8; text-align: left;"></div>
             <div id="mismatch-warning" style="display: none; align-items: flex-start; gap: 10px; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 12px; padding: 12px 14px; font-size: 13px; color: #fbbf24; text-align: left; width: 100%; max-width: 340px; line-height: 1.5;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="flex-shrink: 0; margin-top: 1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
                 <span id="mismatch-text"></span>
@@ -245,7 +246,8 @@
         // Real camera feed + eGov AI Document Extractor OCR.
         // Falls back to a mock sequence when the AI token isn't configured.
         import { extractDocument, isOcrConfigured } from './assets/js/egov-ai.js';
-        import { supabase } from './assets/js/supabase-client.js';
+        import { supabase, CURRENT_USER_ID } from './assets/js/supabase-client.js';
+        import { currentProfile } from './assets/js/session.js';
 
         const params = new URLSearchParams(location.search);
         const ayudaId = params.get('id');
@@ -269,7 +271,7 @@
         const overlay = document.getElementById('processing-overlay');
         const preview = document.getElementById('captured-preview');
         const spinner = document.getElementById('processing-spinner');
-        const check = document.getElementById('success-check');
+        const checkEl = document.getElementById('success-check');
         const titleEl = document.getElementById('processing-title');
         const subEl = document.getElementById('processing-sub');
 
@@ -322,6 +324,70 @@
                     <span style="color: #94a3b8; flex-shrink: 0;">${esc(f.key)}</span>
                     <span style="font-weight: 600; text-align: right;">${esc(f.value)}</span>
                 </div>`).join('')}`;
+        }
+
+        // ---------- Document legitimacy checks (Layers 1 & 2) ----------
+        async function sha256Hex(blob) {
+            const buf = await crypto.subtle.digest('SHA-256', await blob.arrayBuffer());
+            return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // Runs all legitimacy checks. Returns { ok, issues[], passes[], hash }.
+        async function validateDocument(extractedHtml, blob) {
+            const issues = [], passes = [];
+            const fields = parseExtraction(extractedHtml);
+
+            // Type check (extractor's own Document Type verdict first)
+            if (!matchesRequiredDoc(extractedHtml)) {
+                issues.push(`This doesn't look like a ${docName}.`);
+            } else {
+                passes.push('Document type matches the requirement');
+            }
+
+            // LAYER 1 — identity: the name on the document must match the
+            // logged-in citizen's eGov profile.
+            const prof = currentProfile();
+            const nameFields = fields.filter(f => /name/i.test(f.key) && !/file|platform|entity/i.test(f.key));
+            if (prof?.full_name && nameFields.length) {
+                const tokens = prof.full_name.toUpperCase().split(/[^A-ZÑ]+/).filter(t => t.length > 2);
+                const docText = nameFields.map(f => f.value).join(' ').toUpperCase();
+                if (tokens.some(t => docText.includes(t))) {
+                    passes.push('Name on document matches your eGov profile');
+                } else {
+                    issues.push('The name on this document does not match your eGov profile.');
+                }
+            }
+
+            // LAYER 2a — freshness: expired or stale documents are flagged.
+            for (const f of fields.filter(f => /date|issued|valid|expir/i.test(f.key))) {
+                const d = new Date(f.value);
+                if (isNaN(d.getTime())) continue;
+                if (/expir|valid until|validity/i.test(f.key) && d < new Date()) {
+                    issues.push(`Document is expired (${f.key}: ${f.value}).`);
+                } else if (/issue/i.test(f.key)) {
+                    const months = (Date.now() - d.getTime()) / (30 * 24 * 3600 * 1000);
+                    if (months > 6) issues.push(`Document was issued over 6 months ago (${f.value}).`);
+                    else if (months >= 0) passes.push('Document is recent (issued within 6 months)');
+                }
+            }
+
+            // LAYER 2b — duplicate: the exact same image submitted by a
+            // DIFFERENT citizen means a recycled document.
+            let hash = null;
+            try {
+                hash = await sha256Hex(blob);
+                const { data: dupes } = await supabase
+                    .from('applications')
+                    .select('user_id')
+                    .contains('submitted_documents', JSON.stringify([{ hash }]));
+                if ((dupes || []).some(d => d.user_id !== CURRENT_USER_ID)) {
+                    issues.push('This exact document image was already submitted by another citizen.');
+                } else {
+                    passes.push('No duplicate submission of this document on record');
+                }
+            } catch (err) { console.warn('Duplicate check unavailable', err); }
+
+            return { ok: !issues.length, issues, passes, hash };
         }
 
         const DOC_KEYWORDS = {
@@ -380,7 +446,7 @@
         function markVerifiedAndFinish() {
             localStorage.setItem(capturedKey, '1');
             spinner.style.display = 'none';
-            check.style.display = 'flex';
+            checkEl.style.display = 'flex';
             titleEl.textContent = 'Document Extracted';
             subEl.textContent = `${docName} verified`;
         }
@@ -388,8 +454,9 @@
         function resetOverlay() {
             overlay.classList.remove('show');
             spinner.style.display = 'block';
-            check.style.display = 'none';
+            checkEl.style.display = 'none';
             resultEl.style.display = 'none';
+            document.getElementById('verify-notes').style.display = 'none';
             mismatchEl.style.display = 'none';
             continueBtn.style.display = 'none';
             continueBtn.textContent = 'Continue';
@@ -436,21 +503,34 @@
                     resultEl.innerHTML = renderExtraction(extracted);
                     resultEl.style.display = 'block';
 
-                    if (matchesRequiredDoc(extracted)) {
-                        markVerifiedAndFinish();
+                    subEl.textContent = 'Verifying legitimacy…';
+                    const check = await validateDocument(extracted, blob);
+                    const notesEl = document.getElementById('verify-notes');
+                    notesEl.innerHTML = check.passes.map(t => `✓ ${t}`).join('<br>');
+                    notesEl.style.display = check.passes.length ? 'block' : 'none';
+                    const saveCapture = () => {
+                        localStorage.setItem(capturedKey, '1');
+                        if (check.hash) localStorage.setItem(`${capturedKey}_hash`, check.hash);
+                    };
+
+                    if (check.ok) {
+                        saveCapture();
+                        spinner.style.display = 'none';
+                        checkEl.style.display = 'flex';
+                        titleEl.textContent = 'Document Verified';
+                        subEl.textContent = `${docName} passed all legitimacy checks`;
                         continueBtn.style.display = 'inline-block';
                     } else {
-                        // Extracted fine, but it doesn't look like the required doc.
                         spinner.style.display = 'none';
-                        titleEl.textContent = 'Wrong Document?';
+                        titleEl.textContent = 'Verification Issues';
                         subEl.textContent = '';
-                        mismatchText.textContent = `This doesn't look like a ${docName}. Please retake with the correct document.`;
+                        mismatchText.innerHTML = check.issues.map(t => `• ${t}`).join('<br>');
                         mismatchEl.style.display = 'flex';
                         retryBtn.style.display = 'inline-block';
                         continueBtn.textContent = 'Use Anyway';
                         continueBtn.style.background = '#475569';
                         continueBtn.style.display = 'inline-block';
-                        continueBtn.onclick = () => { localStorage.setItem(capturedKey, '1'); finish(); };
+                        continueBtn.onclick = () => { saveCapture(); finish(); };
                     }
                 } catch (err) {
                     console.error(err);

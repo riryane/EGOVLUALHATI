@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E-Tulong — Code Map, Workarounds &amp; Loopholes</title>
+<style>
+    :root { --ink:#111827; --muted:#4b5563; --line:#d1d5db; --accent:#0d3b9e; --soft:#f3f4f6; --warn:#b45309; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: Georgia,'Times New Roman',serif; color:var(--ink); line-height:1.55; font-size:13.5px; max-width:840px; margin:0 auto; padding:40px 32px; background:#fff; }
+    header { border-bottom:3px solid var(--accent); padding-bottom:16px; margin-bottom:24px; }
+    header h1 { font-size:27px; letter-spacing:-0.5px; }
+    header .meta { font-family:-apple-system,'Segoe UI',sans-serif; font-size:11.5px; color:var(--muted); margin-top:8px; }
+    h2 { font-family:-apple-system,'Segoe UI',sans-serif; font-size:16.5px; color:var(--accent); margin:28px 0 10px; padding-bottom:4px; border-bottom:1px solid var(--line); }
+    p { margin-bottom:9px; }
+    ul { margin:4px 0 10px 22px; }
+    li { margin-bottom:4px; }
+    table { width:100%; border-collapse:collapse; font-family:-apple-system,'Segoe UI',sans-serif; font-size:11.5px; margin:10px 0 16px; }
+    th,td { border:1px solid var(--line); padding:7px 9px; text-align:left; vertical-align:top; }
+    th { background:var(--soft); font-size:10.5px; text-transform:uppercase; letter-spacing:0.4px; }
+    code { font-family:'SF Mono',Menlo,Consolas,monospace; font-size:0.9em; background:var(--soft); padding:1px 5px; border-radius:4px; }
+    .loop { margin:12px 0; page-break-inside:avoid; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+    .loop .head { font-family:-apple-system,'Segoe UI',sans-serif; font-weight:700; font-size:12.5px; padding:9px 13px; background:#fff7ed; color:var(--warn); border-bottom:1px solid var(--line); }
+    .loop .body { padding:9px 13px; font-size:12.5px; }
+    .loop .fix { font-family:-apple-system,'Segoe UI',sans-serif; font-size:11px; color:#065f46; background:#ecfdf5; padding:7px 13px; border-top:1px dashed var(--line); }
+    .callout { background:#eef2ff; border-left:4px solid var(--accent); padding:12px 16px; margin:14px 0; font-size:13px; }
+    .page-break { page-break-before:always; }
+    @media print { body{padding:0; font-size:11pt; max-width:none;} .no-print{display:none;} .loop,table{break-inside:avoid;} h2{break-after:avoid;} }
+    .print-btn { position:fixed; top:16px; right:16px; font-family:-apple-system,sans-serif; font-size:13px; font-weight:600; background:var(--accent); color:#fff; border:none; border-radius:8px; padding:10px 16px; cursor:pointer; }
+</style>
+</head>
+<body>
+<button class="print-btn no-print" onclick="window.print()">🖨 Print</button>
+
+<header>
+    <h1>E-Tulong — Code Map, Workarounds &amp; Loopholes</h1>
+    <div class="meta">Lualhatinnovators · Internal technical-interview companion to TECHNICAL-BRIEF.html · Know every weakness before the judges do</div>
+</header>
+
+<div class="callout">
+    <b>The one-sentence defense:</b> every enforcement in this MVP lives client-side because the prototype deliberately has no backend — that is <b>one</b> architectural decision with <b>one</b> fix (a thin server layer), and we can name exactly which checks move behind it.
+</div>
+
+<h2>1. Code map — every file and what it does</h2>
+<table>
+    <tr><th>File</th><th>Responsibility</th><th>Key mechanics worth knowing</th></tr>
+    <tr><td><code>login.html</code></td><td>Authentication: eGov SSO, SMS OTP, Demo Mode</td><td>SSO handles <code>?exchange_code=</code> redirects and pasted codes; OTP generates a 6-digit code (5-min TTL), sends via eMessage, resolves the account by registered mobile; all dialogs are in-frame bottom-sheet modals</td></tr>
+    <tr><td><code>assets/js/egov-sso.js</code></td><td>SSO flow + auto-registration</td><td>Exchange code → bearer token → profile; matches by <code>uniqid</code>; maps 25+ profile fields incl. socio-economic (occupation, salary bracket, education); copies the program catalog to new users; stores the profile snapshot in the session; retries without rich columns if the DB is un-migrated</td></tr>
+    <tr><td><code>assets/js/session.js</code></td><td>Session &amp; guards</td><td>Session = <code>users.id</code> + profile snapshot in localStorage; <code>requireSession()</code> on every page; logout wipes session, profile, and captured-document flags</td></tr>
+    <tr><td><code>assets/js/emessage.js</code></td><td>SMS delivery</td><td><code>X-EMESSAGE-Auth</code> header; optional one-line <code>SMS_ROUTE_OVERRIDE</code> to force-route all SMS to one phone for demos</td></tr>
+    <tr><td><code>assets/js/egov-ai.js</code></td><td>OCR token lifecycle + extraction</td><td>Access code → 48-hour token (200 credits) cached with 5-min-early refresh; 401 triggers one refresh-and-retry; multipart upload of the camera frame</td></tr>
+    <tr><td><code>assets/js/eligibility.js</code></td><td>Rules engine</td><td>7 rule types (age, residency, profile-complete, no-same-category, income-below, occupation, education-recency); 3 verdicts — failing an <i>immutable</i> rule (age) yields <b>Not Eligible</b>, fixable failures yield <b>Possibly Eligible</b>; same engine runs for citizen and agency</td></tr>
+    <tr><td><code>index.html</code> (eAyuda)</td><td>Program catalog</td><td>Computed verdict badges, program search, category pills + eligibility dropdown with live counts, agency seals with graceful fallback, eligible-first sorting</td></tr>
+    <tr><td><code>details.html</code></td><td>Program detail + apply gate</td><td>Per-rule pass/fail checklist from the engine; gate handles: already applied, rejection cooldown (with reason + unlock time), hard ineligibility, and normal apply</td></tr>
+    <tr><td><code>document-requirements.html</code></td><td>Document checklist</td><td>Documents keyed <b>by name</b> so one capture satisfies every program needing it; missing-docs bottom sheet; deep-link guard re-computes eligibility; demo reset for captures</td></tr>
+    <tr><td><code>camera.html</code></td><td>Capture + verification</td><td>Capture is <b>cropped to the guide frame</b> (OCR sees only the document); response parsed into fields with noise keys dropped; legitimacy suite: type match → identity match vs SSO profile → expiry/staleness → SHA-256 duplicate check across citizens; labeled demo bypass on service failure; also serves the "submit additional info" round-trip</td></tr>
+    <tr><td><code>face-liveness.html</code></td><td>Biometric verification + submission</td><td>eGov scanner embedded in an iframe (post flow); postMessage + poll with a resolve-once guard (fixed a real double-submit race); enforces SUCCEEDED ≥95 confidence; auto-approves and stores the <code>submitted_documents</code> evidence snapshot incl. image hashes</td></tr>
+    <tr><td><code>transactions.html</code></td><td>My Applications</td><td>Search + status filters; agency notes shown (rejection reason / info request); appeal modal; "Submit Additional Info"路 returns the case to Pending; read-only status chips</td></tr>
+    <tr><td><code>admin.html</code></td><td>Agency portal</td><td>Search + filters; Deny/Request-Info force a written message; View Details shows computed eligibility + evidence <i>as submitted</i>; 2FA pick-up (fresh SMS code, 5-min TTL, checked against fresh DB state); cycle reset (expired) re-opens re-application; demo reset wipes all applications</td></tr>
+    <tr><td><code>digital-id.html / profile.html / privacy.html</code></td><td>ID, profile, privacy</td><td>Digital ID from the PhilSys block; profile is read-only from SSO except the phone number (validated editor, saved to DB + session); RA 10173 notice + consent gate on the dashboard</td></tr>
+    <tr><td><code>supabase/setup_all.sql</code></td><td>One-shot DB setup</td><td>4 tables + seeds + rules; <code>migration_*.sql</code> files are the incremental history; RLS deliberately disabled (see loophole #1)</td></tr>
+    <tr><td><code>serve.py</code></td><td>Dev server</td><td>Static server with no-store headers — exists because browser caching repeatedly masked fixes during development</td></tr>
+</table>
+
+<h2 class="page-break">2. Loopholes &amp; workarounds — with the fix for each</h2>
+<p>Ordered by severity. Volunteer #1 before they find it.</p>
+
+<div class="loop"><div class="head">#1 · Anyone can rewrite the database</div>
+<div class="body">RLS is off and the publishable key ships in page source — a person with DevTools could <code>PATCH</code> their own application to <code>approved</code>, read claim codes, or edit the catalog. This is the root loophole; most others derive from it.</div>
+<div class="fix">Fix: enable RLS with per-user policies; all agency writes go through authenticated server endpoints. One sprint of work.</div></div>
+
+<div class="loop"><div class="head">#2 · Client-side enforcement (cooldown, duplicate block, eligibility gate, auto-approval)</div>
+<div class="body">The rejection cooldown, the already-applied block, the eligibility gate, and the auto-approve decision are all JavaScript — bypassable via console or crafted URLs. The checks are <i>real</i> (real rules, real documents, real biometrics) but the <i>decision point</i> is in the browser.</div>
+<div class="fix">Fix: a thin rules service evaluates and decides server-side; the client only displays.</div></div>
+
+<div class="loop"><div class="head">#3 · Claim codes stored in plaintext</div>
+<div class="body">The 2FA pick-up code sits readable in the <code>applications</code> row; anyone with the key could read it and claim without the SIM.</div>
+<div class="fix">Fix: hash server-side, verify server-side, rate-limit attempts.</div></div>
+
+<div class="loop"><div class="head">#4 · Captured-document state lives in localStorage</div>
+<div class="body">Clearing the browser "un-verifies" documents; only the submission snapshot (with SHA-256 hashes) freezes evidence server-side. Between capture and submission, state is browser-local.</div>
+<div class="fix">Fix: a server-side document store keyed to the user, with retention rules.</div></div>
+
+<div class="loop"><div class="head">#5 · OCR legitimacy is heuristic, not cryptographic</div>
+<div class="body">Type matching is keyword-based; identity matching is token overlap with the SSO name; freshness parses OCR'd dates; the duplicate check catches only bit-identical images (re-photographing defeats it). "Use Anyway" exists as a labeled demo bypass.</div>
+<div class="fix">Fix: issuer verification — registry lookups (PSA/SSS/barangay e-certs) and signed QR documents. Image analysis alone can never prove authenticity; that's the design position.</div></div>
+
+<div class="loop"><div class="head">#6 · Liveness threshold checked client-side</div>
+<div class="body">The result endpoint is documented as backend-to-backend; we call it from the browser and enforce ≥95 there — a tampered client could skip it. The scan itself cannot be faked (it's eGov's hosted scanner), only our reaction to the score.</div>
+<div class="fix">Fix: backend fetches the result and gates the submission.</div></div>
+
+<div class="loop"><div class="head">#7 · API secrets in client JS, in a public repo</div>
+<div class="body">SSO partner secret, eMessage token, liveness key, AI access code — all visible. Accepted consciously for the sandbox; all keys rotate after the event.</div>
+<div class="fix">Fix: backend proxy / edge functions hold every secret.</div></div>
+
+<div class="loop"><div class="head">#8 · The double-submission race (found and fixed — tell this story)</div>
+<div class="body">Scanner completion fired via <b>both</b> postMessage and our 3-second poll; two in-flight result checks each inserted an application → duplicate rows. Diagnosed from a user report, fixed with a resolve-once flag, an in-flight lock, and an idempotency check (skip insert if an active application exists).</div>
+<div class="fix">Production hardening: DB unique partial index on (user, program) where status is active.</div></div>
+
+<div class="loop"><div class="head">#9 · Catalog duplicated per user</div>
+<div class="body">Every user owns a copy of all program rows (a shortcut that let seeded per-user eligibility exist before the rules engine did). Editing a program means updating N rows; we do it with name-matched bulk updates.</div>
+<div class="fix">Fix: single shared catalog table; per-user state computed at read time — the rules engine already makes the per-user copies redundant.</div></div>
+
+<div class="loop"><div class="head">#10 · Sessions never expire; demo conveniences exist</div>
+<div class="body">localStorage session with no TTL; Demo Mode login; demo reset button; SMS force-route override; labeled "Continue in Demo Mode / Verify Anyway" fallbacks when sandbox APIs are down. All are visible, labeled, and none silently fake success.</div>
+<div class="fix">Fix: eGov-managed sessions per the partner checklist; strip demo affordances at pilot.</div></div>
+
+<h2>3. Notable workarounds (engineering stories worth telling)</h2>
+<ul>
+    <li><b>Liveness embedding:</b> the hosted scanner is iframed with the <code>post</code> action instead of the redirect flow — we verified their page sends no <code>X-Frame-Options</code> — so verification never leaves the app shell.</li>
+    <li><b>Capture cropping:</b> OCR quality jumped when we started cropping the camera frame to the guide rectangle (object-fit cover math) — the extractor stopped "reading" wall clocks and watermarks.</li>
+    <li><b>OCR noise filter:</b> the extractor returns guesses ("Possible Name", "Partial Phrase", screen time); we parse its HTML into fields and drop noise keys before display and matching.</li>
+    <li><b>Token lifecycle:</b> the AI token lives 48h with 200 credits — cached, refreshed 5 minutes early, single retry on 401, so it cannot die mid-demo.</li>
+    <li><b>Un-migrated-DB resilience:</b> SSO writes retry without the newer socio-economic columns, so login never breaks against an older schema.</li>
+    <li><b>Cache-proof dev server:</b> <code>serve.py</code> sends no-store headers after browser caching repeatedly disguised real fixes as failures.</li>
+    <li><b>API-outage resilience:</b> we shipped through a real eMessage account ban and an eGov AI outage — every path fails soft with labeled fallbacks and auto-resumes when service returns.</li>
+</ul>
+
+<h2>4. Document legitimacy — current state</h2>
+<table>
+    <tr><th>Layer</th><th>Status</th><th>What it does</th></tr>
+    <tr><td>1 · Identity cross-check</td><td><b>Implemented</b></td><td>Name on the document must token-match the SSO profile; mismatch → "does not match your eGov profile"</td></tr>
+    <tr><td>2a · Freshness</td><td><b>Implemented</b></td><td>Expired documents flagged; issue dates older than 6 months flagged</td></tr>
+    <tr><td>2b · Duplicate detection</td><td><b>Implemented</b></td><td>SHA-256 of the capture; the same image submitted by a different citizen is flagged as recycled</td></tr>
+    <tr><td>3 · Capture provenance</td><td><b>Implemented</b></td><td>Live camera only — no gallery uploads; possession at capture time</td></tr>
+    <tr><td>4 · Issuer verification</td><td>Roadmap</td><td>PSA/SSS/barangay registry lookups; signed QR documents — the true authority</td></tr>
+    <tr><td>5 · Forensic tamper detection</td><td>Roadmap</td><td>Edit-artifact and screen-recapture detection, template matching</td></tr>
+</table>
+
+<h2>5. Where things run — quick reference</h2>
+<table>
+    <tr><th>Concern</th><th>Where it happens today</th><th>Honest caveat</th></tr>
+    <tr><td>Identity</td><td>eGov SSO (server-side, theirs)</td><td>Solid — bound by uniqid</td></tr>
+    <tr><td>Eligibility</td><td><code>eligibility.js</code>, client</td><td>Loophole #2</td></tr>
+    <tr><td>Document verification</td><td>eGov AI (theirs) + our client-side suite</td><td>Loopholes #4, #5</td></tr>
+    <tr><td>Biometrics</td><td>eGov scanner (theirs); threshold ours, client</td><td>Loophole #6</td></tr>
+    <tr><td>Decisions &amp; lifecycle</td><td>Supabase writes from the browser</td><td>Loopholes #1, #2</td></tr>
+    <tr><td>Notifications</td><td>eMessage (theirs), triggered client-side</td><td>Trigger could move server-side with the rest</td></tr>
+</table>
+</body>
+</html>

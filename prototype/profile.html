@@ -405,7 +405,19 @@
             });
         });
 
-        const u = currentProfile();
+        // Refresh the session snapshot from the DB so externally-updated
+        // records (e.g. via eGovPH sync) show without re-logging in.
+        let u = currentProfile();
+        try {
+            const { supabase, CURRENT_USER_ID } = await import('./assets/js/supabase-client.js');
+            const { data: fresh } = await supabase
+                .from('users').select('*').eq('id', CURRENT_USER_ID).single();
+            if (fresh) {
+                u = { ...u, ...fresh };
+                localStorage.setItem('session_profile', JSON.stringify(u));
+            }
+        } catch (err) { console.warn('Profile refresh failed', err); }
+
         if (!u) {
             console.error('No profile in session');
         } else {

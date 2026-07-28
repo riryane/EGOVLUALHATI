@@ -297,6 +297,33 @@
 
         // Does the extracted text plausibly match the REQUIRED document?
         // The extractor reads any document — this checks it's the right one.
+        // Parse the extractor's "<b>Key:</b> value<br>" output into fields,
+        // dropping OCR noise (screen time, watermarks, placeholders, guesses).
+        const NOISE_KEYS = /time|platform|website|placeholder|partial|possible|watermark|url|app\b/i;
+        function parseExtraction(html) {
+            const text = String(html).replace(/<br\s*\/?>/gi, '\n');
+            const fields = [...text.matchAll(/<b>\s*([^<]+?):?\s*<\/b>\s*([^\n<]+)/g)]
+                .map(m => ({ key: m[1].trim(), value: m[2].trim() }))
+                .filter(f => f.value && f.value !== '—');
+            const clean = fields.filter(f => !NOISE_KEYS.test(f.key));
+            return clean.length ? clean : fields;
+        }
+
+        function renderExtraction(html) {
+            const fields = parseExtraction(html);
+            if (!fields.length) return html; // fallback: raw output
+            const esc = (s) => String(s).replace(/[&<>"']/g, c =>
+                ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+            const docType = fields.find(f => /document type/i.test(f.key));
+            const rest = fields.filter(f => f !== docType).slice(0, 8);
+            return `
+                ${docType ? `<div style="font-size: 14px; font-weight: 800; color: #fff; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.15);">${esc(docType.value)}</div>` : ''}
+                ${rest.map(f => `<div style="display: flex; justify-content: space-between; gap: 12px;">
+                    <span style="color: #94a3b8; flex-shrink: 0;">${esc(f.key)}</span>
+                    <span style="font-weight: 600; text-align: right;">${esc(f.value)}</span>
+                </div>`).join('')}`;
+        }
+
         const DOC_KEYWORDS = {
             'proof of billing':    ['billing', 'bill', 'barangay', 'certificate', 'meralco', 'electric', 'water', 'utility'],
             'barangay residency':  ['barangay', 'residency', 'resident', 'certificate', 'punong'],
@@ -306,7 +333,10 @@
             'medical':             ['medical', 'hospital', 'diagnosis', 'burial', 'death', 'school', 'tuition', 'abstract'],
         };
         function matchesRequiredDoc(extractedHtml) {
-            const text = extractedHtml.toLowerCase();
+            // The extractor's own "Document Type" verdict is the strongest
+            // signal — check it first, then fall back to the full text.
+            const docTypeField = parseExtraction(extractedHtml).find(f => /document type/i.test(f.key));
+            const text = ((docTypeField ? docTypeField.value + ' ' : '') + extractedHtml).toLowerCase();
             const nameLc = docName.toLowerCase();
             const entry = Object.entries(DOC_KEYWORDS).find(([k]) => nameLc.includes(k.split(' ')[0]) && nameLc.includes(k.split(' ')[1] || ''));
             const keywords = entry ? entry[1]
@@ -318,12 +348,32 @@
             return new Promise((resolve) => {
                 if (!(stream && video.videoWidth)) return resolve(null);
                 const canvas = document.createElement('canvas');
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                canvas.getContext('2d').drawImage(video, 0, 0);
-                preview.src = canvas.toDataURL('image/jpeg', 0.8);
+                const ctx = canvas.getContext('2d');
+
+                // Crop to the scan-frame guide so the OCR sees ONLY the
+                // document — no status bar, watermarks, or background.
+                try {
+                    const c = document.querySelector('.viewfinder-container').getBoundingClientRect();
+                    const f = document.querySelector('.scan-frame').getBoundingClientRect();
+                    const scale = Math.max(c.width / video.videoWidth, c.height / video.videoHeight);
+                    const offX = (video.videoWidth * scale - c.width) / 2;
+                    const offY = (video.videoHeight * scale - c.height) / 2;
+                    const sx = Math.max(0, (f.left - c.left + offX) / scale);
+                    const sy = Math.max(0, (f.top - c.top + offY) / scale);
+                    const sw = Math.min(video.videoWidth - sx, f.width / scale);
+                    const sh = Math.min(video.videoHeight - sy, f.height / scale);
+                    canvas.width = Math.round(sw);
+                    canvas.height = Math.round(sh);
+                    ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+                } catch (e) {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    ctx.drawImage(video, 0, 0);
+                }
+
+                preview.src = canvas.toDataURL('image/jpeg', 0.85);
                 preview.style.display = 'block';
-                canvas.toBlob(resolve, 'image/jpeg', 0.85);
+                canvas.toBlob(resolve, 'image/jpeg', 0.9);
             });
         }
 
@@ -383,7 +433,7 @@
                 try {
                     subEl.textContent = 'Analyzing with eGov AI…';
                     const extracted = await extractDocument(blob, `${docName.replace(/\W+/g, '_')}.jpg`);
-                    resultEl.innerHTML = extracted; // API returns formatted <b>/<br> HTML
+                    resultEl.innerHTML = renderExtraction(extracted);
                     resultEl.style.display = 'block';
 
                     if (matchesRequiredDoc(extracted)) {

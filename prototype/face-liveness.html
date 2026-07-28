@@ -200,6 +200,8 @@
         // it redirects back here (?cb=1) → fetch the result and enforce the
         // recommended threshold (SUCCEEDED + confidence >= 95).
         import { supabase, CURRENT_USER_ID } from './assets/js/supabase-client.js';
+        import { evaluate } from './assets/js/eligibility.js';
+        import { currentProfile } from './assets/js/session.js';
 
         const LIVENESS_API = 'https://hackathon-face-liveness-api.e.gov.ph';
         const LIVENESS_API_KEY = '9e31b23d-eeb4-ae08-ff13-cdf8380e5307';
@@ -308,21 +310,41 @@
                                  ...(hash ? { hash } : {}) };
                     });
                 }
-                // Straight-through processing: eligibility, documents, and
-                // identity were all verified upstream — the application is
-                // auto-approved on submission.
+                // Straight-through processing — but only when EVERY requirement
+                // is digitally verifiable. Programs with review-only criteria
+                // (e.g. 4Ps household composition) go to the agency as Pending.
+                let autoApprove = true;
+                try {
+                    const [{ data: fullAyuda }, { data: myApps }] = await Promise.all([
+                        supabase.from('assistance').select('*').eq('id', ayudaId).single(),
+                        supabase.from('applications').select('assistance_id, status, assistance ( category, program_name )')
+                            .eq('user_id', CURRENT_USER_ID),
+                    ]);
+                    const verdict = fullAyuda ? evaluate(fullAyuda, currentProfile(), myApps) : null;
+                    if (verdict?.pendingReview) autoApprove = false;
+                } catch (err) { console.warn('Verdict re-check failed', err); }
+
+                const status = autoApprove ? 'approved' : 'pending';
                 const { error: appError } = await supabase.from('applications')
-                    .insert({ user_id: CURRENT_USER_ID, assistance_id: ayudaId, status: 'approved',
+                    .insert({ user_id: CURRENT_USER_ID, assistance_id: ayudaId, status,
                               submitted_documents: snapshot });
                 if (appError) console.error('Failed to record application', appError);
 
+                // Tailor the success screen to the outcome.
+                document.querySelector('.success-title').textContent =
+                    autoApprove ? 'Application Auto-Approved!' : 'Application Submitted!';
+                document.getElementById('success-sub').innerHTML = autoApprove
+                    ? 'Eligibility, documents, and identity were all verified digitally —<br>your application was approved on submission.'
+                    : 'Identity verified and documents received.<br>Requirements marked for review will be confirmed by the agency.';
+
                 const { sendSms } = await import('./assets/js/emessage.js');
-                const { currentProfile } = await import('./assets/js/session.js');
                 const phone = currentProfile()?.phone || '';
                 if (phone) {
                     const e164 = '+63' + phone.replace(/\D/g, '').slice(-10);
-                    sendSms(e164, 'eGovPH: Your eTulong application has been received and AUTO-APPROVED — eligibility, documents, and identity were all verified digitally. We will notify you when your benefit is ready for pick-up.')
-                        .catch(err => console.warn('Auto-approval SMS failed', err));
+                    const msg = autoApprove
+                        ? 'eGovPH: Your eTulong application has been received and AUTO-APPROVED — eligibility, documents, and identity were all verified digitally. We will notify you when your benefit is ready for pick-up.'
+                        : 'eGovPH: Your eTulong application has been RECEIVED and is UNDER REVIEW. Requirements that cannot be verified digitally will be confirmed by the agency. We will notify you of the decision by SMS.';
+                    sendSms(e164, msg).catch(err => console.warn('Submission SMS failed', err));
                 }
             }
             setTimeout(() => successOverlay.classList.add('show'), 700);

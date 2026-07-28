@@ -273,7 +273,7 @@
                         Email: ${esc(u.email || '—')}<br>
                         Address: ${esc(u.address || '—')}<br>
                         <b style="color: #0f172a; display: block; margin-top: 8px;">Eligibility${computed ? ` — ${computed.title}` : ''}</b>
-                        ${req.map(r0 => `${r0.met ? '✓' : '✗'} ${esc(r0.text)}`).join('<br>') || '—'}
+                        ${req.map(r0 => `${r0.met === true ? '✓' : r0.met === null ? '◐ (review)' : '✗'} ${esc(r0.text)}`).join('<br>') || '—'}
                         <b style="color: #0f172a; display: block; margin-top: 8px;">${docsLabel}</b>
                         ${docs.map(d => `${d.verified ? '✓ verified' : '◻ not submitted'} — ${esc(d.name)}${(d.via || d.source) ? ' (' + esc(d.via || d.source) + ')' : ''}`).join('<br>') || 'No documents required'}
                     </div>`;

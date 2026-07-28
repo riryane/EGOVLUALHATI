@@ -182,12 +182,13 @@
                         </div>
                     </div>`;
 
+                const REVIEW_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>';
                 const requirements = eligItems.map((req) => `
                     <div class="requirement-item">
-                        <div class="requirement-icon"${req.met ? '' : ' style="color:#ef4444;"'}>
-                            ${req.met ? CHECK : CROSS}
+                        <div class="requirement-icon"${req.met === false ? ' style="color:#ef4444;"' : req.met === null ? ' style="color:#b45309;"' : ''}>
+                            ${req.met === true ? CHECK : req.met === null ? REVIEW_ICON : CROSS}
                         </div>
-                        <div class="requirement-text">${esc(req.text)}</div>
+                        <div class="requirement-text">${esc(req.text)}${req.met === null ? ' <span style="color:#b45309; font-size: 11.5px; font-weight: 600;">(verified during review)</span>' : ''}</div>
                     </div>`).join('');
 
                 rootEl.innerHTML = `

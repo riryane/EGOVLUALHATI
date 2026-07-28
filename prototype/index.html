@@ -57,7 +57,7 @@
             </div>
 
             <div style="padding: 0 24px; margin-top: 4px; position: relative;">
-                <input type="text" id="benefit-search" placeholder="Search ayuda programs"
+                <input type="text" id="benefit-search" placeholder="Search programs or agency (e.g. DSWD)"
                     style="width: 100%; box-sizing: border-box; border: 1px solid var(--border-color); border-radius: 12px; padding: 13px 42px 13px 14px; font-family: inherit; font-size: 14.5px; color: var(--text-main); outline: none;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="2" width="19" height="19" style="position: absolute; right: 40px; top: 50%; transform: translateY(-50%);"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
             </div>
@@ -234,6 +234,19 @@
         };
         const HEART_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>';
 
+        // Search understands full agency names, not just acronyms.
+        const AGENCY_FULL = {
+            'DSWD': 'Department of Social Welfare and Development',
+            'DOLE': 'Department of Labor and Employment',
+            'CHED': 'Commission on Higher Education',
+            'DOH': 'Department of Health',
+            'SSS': 'Social Security System',
+            'PhilHealth': 'Philippine Health Insurance Corporation',
+            'DTI': 'Department of Trade and Industry',
+            'QC LGU': 'Quezon City Local Government',
+            'Alaminos LGU': 'Alaminos City Local Government Pangasinan',
+        };
+
         const filterDd = document.getElementById('filter-dd');
         const filterBtn = document.getElementById('filter-btn');
         const filterMenu = document.getElementById('filter-menu');
@@ -261,7 +274,7 @@
         function render() {
             const visible = (rows || []).filter((r) => {
                 if (searchTerm) {
-                    const hay = `${r.program_name} ${r.agency} ${r.description || ''} ${r.category || ''}`.toLowerCase();
+                    const hay = `${r.program_name} ${r.agency} ${AGENCY_FULL[r.agency] || ''} ${r.description || ''} ${r.category || ''}`.toLowerCase();
                     if (!hay.includes(searchTerm)) return false;
                 }
                 if (activeCategory !== 'All' && r.category !== activeCategory) return false;

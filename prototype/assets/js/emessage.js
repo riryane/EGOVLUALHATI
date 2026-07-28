@@ -3,10 +3,10 @@
 const EMESSAGE_BASE_URL = 'https://ws-message.e.gov.ph';
 const EMESSAGE_API_TOKEN = '40419e47290ae8488a0a796b7c4c66aa';
 
-// DEMO ROUTING: sandbox test identities carry unreachable +63909... numbers,
-// so every SMS is routed to the demo phone. Set to null to send to the
-// recipient's actual number.
-const SMS_ROUTE_OVERRIDE = '+639664529917';
+// SMS goes to each account's actual registered number (editable in the
+// Personal Information page). Set a value here to force-route every SMS
+// to one phone for demos, e.g. '+639664529917'.
+const SMS_ROUTE_OVERRIDE = null;
 
 export function isEmessageConfigured() {
     return EMESSAGE_API_TOKEN !== 'YOUR_EMESSAGE_API_TOKEN';

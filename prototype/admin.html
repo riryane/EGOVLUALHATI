@@ -529,29 +529,14 @@
         // DEMO ONLY: wipe every application and restore the baseline
         // sample history so the demo can be re-run from scratch.
         document.getElementById('demo-reset').addEventListener('click', async (e) => {
-            if (!confirm('DEMO RESET: delete ALL applications and restore the baseline sample history?')) return;
+            if (!confirm('DEMO RESET: delete ALL applications (applied, approved, claimed - everything)? Submitted document verifications are kept.')) return;
             const btn = e.currentTarget;
             btn.disabled = true;
             btn.textContent = 'Resetting…';
             try {
+                // Wipe every application. Document verifications (citizen-side
+                // captures) are untouched by design.
                 await supabase.from('applications').delete().gte('applied_at', '1970-01-01');
-
-                const { data: catalog } = await supabase
-                    .from('assistance').select('id, user_id, program_name');
-                const plan = [
-                    ['Assistance to Individuals', 'done',       '2026-06-10'],
-                    ['TUPAD',                     'for_pickup', '2026-07-15'],
-                    ['CHED',                      'approved',   '2026-07-18'],
-                ];
-                const seeds = [];
-                for (const row of (catalog || [])) {
-                    for (const [frag, status, date] of plan) {
-                        if (row.program_name.includes(frag)) {
-                            seeds.push({ user_id: row.user_id, assistance_id: row.id, status, applied_at: date });
-                        }
-                    }
-                }
-                if (seeds.length) await supabase.from('applications').insert(seeds);
                 await load();
             } catch (err) {
                 console.error('Demo reset failed', err);

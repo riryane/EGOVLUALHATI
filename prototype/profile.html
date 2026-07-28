@@ -219,6 +219,22 @@
                 <div class="field">
                     <div class="field-label">Phone number</div>
                     <div class="field-value" id="f-phone">—</div>
+                    <a href="#" class="chip-btn" id="edit-phone-btn">
+                        Change Number
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    </a>
+                    <div id="phone-editor" style="display: none; margin-top: 12px;">
+                        <div style="display: flex; gap: 8px;">
+                            <div style="flex: 1; display: flex; align-items: center; gap: 8px; border: 1px solid #d7dbe0; border-radius: 12px; padding: 12px 14px;">
+                                <span style="font-size: 15px; font-weight: 600;">🇵🇭 +63</span>
+                                <input id="phone-editor-input" type="tel" inputmode="numeric" maxlength="10" placeholder="9XX XXX XXXX"
+                                    style="flex: 1; border: none; outline: none; font-family: inherit; font-size: 15px; font-weight: 600; min-width: 0;">
+                            </div>
+                            <button id="phone-editor-save" style="border: none; background: #1d4ed8; color: #fff; font-family: inherit; font-size: 14px; font-weight: 700; padding: 0 18px; border-radius: 12px; cursor: pointer;">Save</button>
+                        </div>
+                        <div id="phone-editor-error" style="display: none; font-size: 12px; color: #dc2626; font-weight: 600; margin-top: 6px;">Enter a valid PH mobile number (9XXXXXXXXX).</div>
+                        <div style="font-size: 11.5px; color: #94a3b8; margin-top: 6px;">SMS notifications and OTP login will use this number.</div>
+                    </div>
                 </div>
                 <div class="field">
                     <div class="field-label">Email</div>
@@ -351,6 +367,40 @@
         const fmtDate = (d) => d
             ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
             : '—';
+
+        import('./assets/js/supabase-client.js').then(({ supabase, CURRENT_USER_ID }) => {
+            const editBtn = document.getElementById('edit-phone-btn');
+            const editor = document.getElementById('phone-editor');
+            const input = document.getElementById('phone-editor-input');
+            const errEl = document.getElementById('phone-editor-error');
+
+            editBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                editor.style.display = editor.style.display === 'none' ? 'block' : 'none';
+                const prof = currentProfile() || {};
+                input.value = (prof.phone || '').replace(/\D/g, '').slice(-10);
+                input.focus();
+            });
+
+            document.getElementById('phone-editor-save').addEventListener('click', async () => {
+                let d = input.value.replace(/\D/g, '');
+                if (d.startsWith('63')) d = d.slice(2);
+                if (d.startsWith('0')) d = d.slice(1);
+                if (d.length !== 10 || !d.startsWith('9')) { errEl.style.display = 'block'; return; }
+                errEl.style.display = 'none';
+                const formatted = `+63 ${d.slice(0,3)} ${d.slice(3,6)} ${d.slice(6)}`;
+
+                const { error } = await supabase.from('users')
+                    .update({ phone: formatted }).eq('id', CURRENT_USER_ID);
+                if (error) { console.error(error); errEl.textContent = 'Could not save. Try again.'; errEl.style.display = 'block'; return; }
+
+                const prof = currentProfile() || {};
+                prof.phone = formatted;
+                localStorage.setItem('session_profile', JSON.stringify(prof));
+                document.getElementById('f-phone').textContent = formatted;
+                editor.style.display = 'none';
+            });
+        });
 
         const u = currentProfile();
         if (!u) {

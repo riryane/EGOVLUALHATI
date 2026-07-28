@@ -93,20 +93,9 @@ async function seedDefaultsForNewUser(userId, p) {
     const { data: templates } = await supabase
         .from('assistance').select('*').eq('user_id', ASSISTANCE_TEMPLATE_USER_ID);
     if (templates?.length) {
+        // New accounts start with the catalog and an EMPTY application history.
         const copies = templates.map(({ id, user_id, ...rest }) => ({ ...rest, user_id: userId }));
-        const { data: inserted } = await supabase.from('assistance').insert(copies).select('id, program_name');
-
-        // Sample application history so the new account isn't empty.
-        if (inserted?.length) {
-            const byName = (frag) => inserted.find(a => a.program_name.includes(frag))?.id;
-            const samples = [
-                { frag: 'AICS',  status: 'done',       applied_at: '2026-06-10' },
-                { frag: 'TUPAD', status: 'for_pickup', applied_at: '2026-07-15' },
-                { frag: 'CHED',  status: 'approved',   applied_at: '2026-07-18' },
-            ].map(s => ({ user_id: userId, assistance_id: byName(s.frag), status: s.status, applied_at: s.applied_at }))
-             .filter(s => s.assistance_id);
-            if (samples.length) await supabase.from('applications').insert(samples);
-        }
+        await supabase.from('assistance').insert(copies);
     }
 
     // Digital ID from the SSO national_id block.

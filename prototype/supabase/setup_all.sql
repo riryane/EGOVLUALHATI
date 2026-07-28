@@ -94,13 +94,17 @@ alter table applications disable row level security;
 
 insert into users (id, full_name, location, avatar_url, email, phone, date_of_birth,
                    citizenship, address, weight_kg, height_cm, eyes_color, complexion,
-                   birth_country, birth_province, birth_municipality, marital_status) values
+                   birth_country, birth_province, birth_municipality, marital_status,
+                   occupation, industry, expected_salary, education, region, barangay) values
   ('11111111-1111-1111-1111-111111111111',
    'Lualhati Recto', 'Metro Manila',
    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4AOT-gxCM6tq8X9shPsAa6OTtSESBDJ8RUFkAfk5uv_6S8nCj7kr_mAc&s=10',
    'lualhatirecto@gmail.com', '+63 966 452 9917', '1990-05-14',
    'Filipino', '123 Mabini St, Brgy. San Isidro, Quezon City, Metro Manila, Philippines',
-   55, 157, 'Brown', 'Fair', 'Philippines', 'Metro Manila', 'Quezon City', 'Single');
+   55, 157, 'Brown', 'Fair', 'Philippines', 'Metro Manila', 'Quezon City', 'Single',
+   'Sari-sari Store Owner / Market Vendor', 'Wholesale and Retail Trade', '5,000-10,000',
+   '[{"level":"High School","school":"Quezon City High School","educational_background":"General Secondary","from":"2004","to":"2008"}]'::jsonb,
+   'NATIONAL CAPITAL REGION (NCR)', 'SAN ISIDRO');
 
 insert into assistance
   (id, user_id, program_name, agency, category, assistance_type, description,

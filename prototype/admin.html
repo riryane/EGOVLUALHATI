@@ -129,10 +129,17 @@
 <body>
     <div class="app-container">
         <div class="admin-header">
-            <div class="admin-title">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22" style="color: var(--primary-color);"><path d="M3 21h18"></path><path d="M5 21V7l7-4 7 4v14"></path><path d="M9 21v-6h6v6"></path></svg>
-                eTulong Agency Portal
-                <span class="demo-badge">Demo</span>
+            <div class="admin-title" style="justify-content: space-between;">
+                <span style="display: inline-flex; align-items: center; gap: 8px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22" style="color: var(--primary-color);"><path d="M3 21h18"></path><path d="M5 21V7l7-4 7 4v14"></path><path d="M9 21v-6h6v6"></path></svg>
+                    eTulong Agency Portal
+                    <span class="demo-badge">Demo</span>
+                </span>
+                <button id="demo-reset" title="Demo only: restore all applications to the baseline state"
+                    style="display: inline-flex; align-items: center; gap: 5px; border: 1.5px solid #ef4444; background: #fff; color: #ef4444; font-family: inherit; font-size: 11.5px; font-weight: 700; padding: 7px 12px; border-radius: 16px; cursor: pointer;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                    Demo Reset
+                </button>
             </div>
             <div class="admin-sub">Review citizen applications — approve, deny, or request additional information.</div>
         </div>
@@ -517,6 +524,40 @@
             pill.classList.add('active');
             activeFilter = pill.dataset.status;
             render();
+        });
+
+        // DEMO ONLY: wipe every application and restore the baseline
+        // sample history so the demo can be re-run from scratch.
+        document.getElementById('demo-reset').addEventListener('click', async (e) => {
+            if (!confirm('DEMO RESET: delete ALL applications and restore the baseline sample history?')) return;
+            const btn = e.currentTarget;
+            btn.disabled = true;
+            btn.textContent = 'Resetting…';
+            try {
+                await supabase.from('applications').delete().gte('applied_at', '1970-01-01');
+
+                const { data: catalog } = await supabase
+                    .from('assistance').select('id, user_id, program_name');
+                const plan = [
+                    ['Assistance to Individuals', 'done',       '2026-06-10'],
+                    ['TUPAD',                     'for_pickup', '2026-07-15'],
+                    ['CHED',                      'approved',   '2026-07-18'],
+                ];
+                const seeds = [];
+                for (const row of (catalog || [])) {
+                    for (const [frag, status, date] of plan) {
+                        if (row.program_name.includes(frag)) {
+                            seeds.push({ user_id: row.user_id, assistance_id: row.id, status, applied_at: date });
+                        }
+                    }
+                }
+                if (seeds.length) await supabase.from('applications').insert(seeds);
+                await load();
+            } catch (err) {
+                console.error('Demo reset failed', err);
+            }
+            btn.disabled = false;
+            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg> Demo Reset';
         });
 
         load();

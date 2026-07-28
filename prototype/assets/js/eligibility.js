@@ -108,13 +108,25 @@ export function evaluate(program, profile, apps) {
     });
 
     const metCount = results.filter(r => r.met).length;
-    const verdict = metCount === results.length ? 'eligible' : 'possible';
+
+    // Rules the citizen cannot act on (e.g. age) make the program NOT
+    // eligible, not "possibly" — honesty beats false hope.
+    const IMMUTABLE_TYPES = ['age_range'];
+    const failedImmutable = rules.some((rule, i) => IMMUTABLE_TYPES.includes(rule.type) && !results[i].met);
+
+    const verdict = metCount === results.length ? 'eligible'
+                  : failedImmutable ? 'not_eligible'
+                  : 'possible';
     return {
         verdict,
         results,
-        title: verdict === 'eligible' ? 'Eligible' : 'Possibly Eligible',
+        title: verdict === 'eligible' ? 'Eligible'
+             : verdict === 'not_eligible' ? 'Not Eligible'
+             : 'Possibly Eligible',
         desc: verdict === 'eligible'
             ? 'You meet all the requirements for this program.'
+            : verdict === 'not_eligible'
+            ? 'You do not meet a fixed requirement for this program (such as the age range).'
             : `You meet ${metCount} out of ${results.length} requirements. Complete the rest to apply.`,
     };
 }

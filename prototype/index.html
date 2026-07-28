@@ -88,6 +88,7 @@
                         <button class="filter-option active" data-status="all">All <span class="opt-count"></span></button>
                         <button class="filter-option" data-status="eligible">Eligible <span class="opt-count"></span></button>
                         <button class="filter-option" data-status="possible">Possible <span class="opt-count"></span></button>
+                        <button class="filter-option" data-status="not_eligible">Not Eligible <span class="opt-count"></span></button>
                         <button class="filter-option" data-status="applied">Applied <span class="opt-count"></span></button>
                     </div>
                 </div>
@@ -259,12 +260,13 @@
                 }
                 if (activeCategory !== 'All' && r.category !== activeCategory) return false;
                 if (activeStatus === 'eligible') return verdictOf(r) === 'eligible';
-                if (activeStatus === 'possible') return verdictOf(r) !== 'eligible';
+                if (activeStatus === 'possible') return verdictOf(r) === 'possible';
+                if (activeStatus === 'not_eligible') return verdictOf(r) === 'not_eligible';
                 if (activeStatus === 'applied') return appliedIds.has(r.id);
                 return true;
             }).sort((a, b) => {
                 // Eligible programs first, then possible; stable by sort_order.
-                const rank = (r) => verdictOf(r) === 'eligible' ? 0 : 1;
+                const rank = (r) => ({ eligible: 0, possible: 1, not_eligible: 2 })[verdictOf(r)] ?? 1;
                 return rank(a) - rank(b) || a.sort_order - b.sort_order;
             });
             if (!visible.length) {
@@ -273,8 +275,9 @@
             }
             listEl.innerHTML = visible.map((r) => {
                 const accent = r.accent_color || '#0d3b9e';
-                const isEligible = verdictOf(r) === 'eligible';
-                const statusLabel = isEligible ? 'Eligible' : 'Possible';
+                const v = verdictOf(r);
+                const isEligible = v === 'eligible';
+                const statusLabel = isEligible ? 'Eligible' : v === 'not_eligible' ? 'Not Eligible' : 'Possible';
                 const amount = r.amount_label || r.assistance_type || '';
                 const appliedBadge = appliedIds.has(r.id)
                     ? '<span class="status-tag" style="color: #3b82f6; background-color: #eff6ff;">Applied</span>'
@@ -291,7 +294,7 @@
                             <span class="agency">${esc(r.agency)}</span>
                             <span style="display: flex; gap: 6px;">
                                 ${appliedBadge}
-                                <span class="status-tag ${isEligible ? 'eligible' : 'possible'}">
+                                <span class="status-tag ${isEligible ? 'eligible' : 'possible'}"${v === 'not_eligible' ? ' style="color: #ef4444; background-color: #fef2f2;"' : ''}>
                                     ${isEligible ? CHECK_ICON : INFO_ICON}
                                     ${statusLabel}
                                 </span>
@@ -314,7 +317,8 @@
             const counts = {
                 all: inCategory.length,
                 eligible: inCategory.filter(r => verdictOf(r) === 'eligible').length,
-                possible: inCategory.filter(r => verdictOf(r) !== 'eligible').length,
+                possible: inCategory.filter(r => verdictOf(r) === 'possible').length,
+                not_eligible: inCategory.filter(r => verdictOf(r) === 'not_eligible').length,
                 applied: inCategory.filter(r => appliedIds.has(r.id)).length,
             };
             filterMenu.querySelectorAll('.filter-option').forEach((opt) => {

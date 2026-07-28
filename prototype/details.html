@@ -153,7 +153,8 @@
                 // Computed eligibility (rules engine); falls back to seeded values.
                 const computed = evaluate(r, currentProfile(), myApps);
 
-                const isEligible = (computed?.verdict || r.eligibility_status) === 'eligible';
+                const verdict = computed?.verdict || r.eligibility_status;
+                const isEligible = verdict === 'eligible';
                 const eligTitle = computed?.title || r.eligibility_title;
                 const eligDesc = computed?.desc || r.eligibility_desc;
                 const eligItems = computed?.results || r.requirements || [];
@@ -200,7 +201,7 @@
                         <div class="section-title">Your eligibility</div>
                         <div class="status-card">
                             <div class="status-card-header">
-                                <div class="status-icon ${isEligible ? 'eligible' : 'possible'}">
+                                <div class="status-icon ${isEligible ? 'eligible' : 'possible'}"${verdict === 'not_eligible' ? ' style="color: #ef4444; background-color: #fef2f2;"' : ''}>
                                     ${isEligible
                                         ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>'
                                         : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>'}
@@ -244,14 +245,17 @@
                             Already Applied — View Status
                         </a>`;
                 } else if (r.primary_action === 'Apply Now' && !isEligible) {
-                    // Possibly eligible only — application is locked.
+                    // Locked: hard ineligibility vs. fixable requirements.
+                    const hard = verdict === 'not_eligible';
                     actionEl.innerHTML = `
                         <div style="text-align: center; font-size: 13px; color: #64748b; margin-bottom: 10px;">
-                            You don't meet all the requirements yet. Complete them to unlock the application.
+                            ${hard
+                                ? 'This program has fixed requirements you do not meet (such as the age range).'
+                                : "You don't meet all the requirements yet. Complete them to unlock the application."}
                         </div>
                         <span class="btn-primary" style="background: #cbd5e1; color: #64748b; cursor: not-allowed;">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                            Not Yet Eligible to Apply
+                            ${hard ? 'Not Eligible for This Program' : 'Not Yet Eligible to Apply'}
                         </span>`;
                 } else {
                     const actionHref = r.primary_action === 'Apply Now'

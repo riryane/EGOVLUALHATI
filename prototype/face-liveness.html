@@ -251,6 +251,8 @@
         const instructionBox = document.getElementById('instruction-box');
         let sessionToken = null;
         let pollTimer = null;
+        let resolvedOnce = false;   // guards against postMessage + poll racing
+        let checking = false;
 
         const controlsBar = document.querySelector('.liveness-controls');
 
@@ -285,6 +287,14 @@
             // Record the application (status: pending) with a snapshot of the
             // citizen's document evidence at the moment of submission.
             if (ayudaId && CURRENT_USER_ID) {
+                const { data: dupes } = await supabase.from('applications')
+                    .select('id').eq('user_id', CURRENT_USER_ID).eq('assistance_id', ayudaId)
+                    .not('status', 'in', '(rejected,expired)');
+                if (dupes?.length) {
+                    console.warn('Application already exists — skipping duplicate insert');
+                    setTimeout(() => successOverlay.classList.add('show'), 700);
+                    return;
+                }
                 let snapshot = null;
                 const { data: ayudaRow } = await supabase
                     .from('assistance').select('documents').eq('id', ayudaId).single();
@@ -317,7 +327,8 @@
         }
 
         async function checkResult() {
-            if (!sessionToken) return;
+            if (!sessionToken || resolvedOnce || checking) return;
+            checking = true;
             try {
                 const res = await fetch(`${LIVENESS_API}/v1/liveness/result/${sessionToken}`, {
                     headers: { 'x-api-key': LIVENESS_API_KEY },
@@ -327,6 +338,7 @@
 
                 if (result.status === 'CREATED' || result.status === 'PENDING' || result.status === 'IN_PROGRESS') return;
 
+                resolvedOnce = true;
                 clearInterval(pollTimer);
                 if (result.status === 'SUCCEEDED' && result.confidence_score >= MIN_CONFIDENCE) {
                     handleSuccess(result);
@@ -337,6 +349,8 @@
                 }
             } catch (err) {
                 console.warn('Result poll failed', err);
+            } finally {
+                checking = false;
             }
         }
 

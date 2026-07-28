@@ -26,7 +26,13 @@ create table users (
   birth_municipality text,
   marital_status     text,
   egov_uniqid        text unique,
-  consented_at       timestamptz
+  consented_at       timestamptz,
+  occupation         text,
+  industry           text,
+  expected_salary    text,
+  education          jsonb,
+  region             text,
+  barangay           text
 );
 
 create table assistance (

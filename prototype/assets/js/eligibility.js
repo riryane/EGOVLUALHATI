@@ -67,6 +67,41 @@ export function evaluate(program, profile, apps) {
                     met: !conflict,
                 };
             }
+            case 'income_below': {
+                // expected_salary comes from SSO as a bracket like "130,001-180,000";
+                // the bracket floor is used as the monthly income proxy.
+                const bracket = profile.expected_salary;
+                const floor = bracket ? parseInt(String(bracket).replace(/,/g, '').match(/\d+/)?.[0] || '', 10) : NaN;
+                const hasData = !Number.isNaN(floor);
+                return {
+                    text: hasData
+                        ? `Income below ₱${rule.max.toLocaleString()} (declared: ₱${floor.toLocaleString()}+)`
+                        : `Income below ₱${rule.max.toLocaleString()} (no income record on eGov profile)`,
+                    met: hasData && floor < rule.max,
+                };
+            }
+            case 'occupation_required': {
+                return {
+                    text: profile.occupation
+                        ? `Worker occupation on record (${profile.occupation.slice(0, 40)}${profile.occupation.length > 40 ? '…' : ''})`
+                        : 'Worker occupation on eGov record',
+                    met: Boolean(profile.occupation),
+                };
+            }
+            case 'education_recent': {
+                // Active/recent studies: any educational_attainment entry ending
+                // within the last N years (or still ongoing).
+                const cutoff = new Date().getFullYear() - (rule.within_years || 5);
+                const entries = Array.isArray(profile.education) ? profile.education : [];
+                const recent = entries.some(e => {
+                    const to = parseInt(e.to, 10);
+                    return Number.isNaN(to) || to >= cutoff;
+                });
+                return {
+                    text: `Enrolled or recent studies (within ${rule.within_years || 5} years)`,
+                    met: entries.length > 0 && recent,
+                };
+            }
             default:
                 return { text: rule.text || 'Additional requirement', met: Boolean(rule.met) };
         }

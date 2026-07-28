@@ -280,6 +280,20 @@
                     <div class="field-value" id="f-birth-municipality" style="text-transform: uppercase;">—</div>
                 </div>
 
+                <div class="group-title">Work &amp; Income</div>
+                <div class="field">
+                    <div class="field-label">Occupation</div>
+                    <div class="field-value" id="f-occupation">—</div>
+                </div>
+                <div class="field">
+                    <div class="field-label">Industry</div>
+                    <div class="field-value" id="f-industry">—</div>
+                </div>
+                <div class="field">
+                    <div class="field-label">Declared Salary Range</div>
+                    <div class="field-value" id="f-salary">—</div>
+                </div>
+
                 <div class="group-title">Other Details (NA if not applicable)</div>
                 <div class="field" style="border-bottom: none;">
                     <div class="field-label">Marital Status</div>
@@ -362,6 +376,9 @@
             set('f-birth-province', u.birth_province);
             set('f-birth-municipality', u.birth_municipality);
             set('f-marital', u.marital_status);
+            set('f-occupation', u.occupation);
+            set('f-industry', u.industry);
+            set('f-salary', u.expected_salary);
         }
     </script>
     <script type="module" src="assets/js/clock.js"></script>

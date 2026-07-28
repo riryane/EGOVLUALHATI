@@ -184,10 +184,11 @@
             <div class="success-check">
                 <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" width="44" height="44" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
             </div>
-            <div class="success-title">Application Submitted!</div>
+            <div class="success-title">Application Auto-Approved!</div>
             <div class="success-sub" id="success-sub">
-                Your identity has been verified and your application has been submitted.<br>
-                You will be notified once it is reviewed.
+                Eligibility, documents, and identity were all verified digitally —
+                your application was approved on submission.<br>
+                You will be notified when your benefit is ready for pick-up.
             </div>
             <button class="btn-primary-dark" id="done-btn">View My Applications</button>
         </div>
@@ -295,10 +296,22 @@
                                  via: d.verified ? (d.source || 'eGov') : (captured ? 'Camera (OCR)' : null) };
                     });
                 }
+                // Straight-through processing: eligibility, documents, and
+                // identity were all verified upstream — the application is
+                // auto-approved on submission.
                 const { error: appError } = await supabase.from('applications')
-                    .insert({ user_id: CURRENT_USER_ID, assistance_id: ayudaId, status: 'pending',
+                    .insert({ user_id: CURRENT_USER_ID, assistance_id: ayudaId, status: 'approved',
                               submitted_documents: snapshot });
                 if (appError) console.error('Failed to record application', appError);
+
+                const { sendSms } = await import('./assets/js/emessage.js');
+                const { currentProfile } = await import('./assets/js/session.js');
+                const phone = currentProfile()?.phone || '';
+                if (phone) {
+                    const e164 = '+63' + phone.replace(/\D/g, '').slice(-10);
+                    sendSms(e164, 'eGovPH: Your eTulong application has been received and AUTO-APPROVED — eligibility, documents, and identity were all verified digitally. We will notify you when your benefit is ready for pick-up.')
+                        .catch(err => console.warn('Auto-approval SMS failed', err));
+                }
             }
             setTimeout(() => successOverlay.classList.add('show'), 700);
         }

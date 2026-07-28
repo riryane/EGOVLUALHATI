@@ -57,8 +57,18 @@ function mapProfileToUser(p) {
     const health = extra.health_data || {};
     const birth = extra.birth_place || {};
     const other = extra.other_personal_information || {};
+    const work = extra.occupation || {};
+    const ind = extra.industry || {};
+    const salary = extra.expected_salary || {};
     return {
         egov_uniqid: p.uniqid,
+        // Socio-economic signals used by the eligibility rules engine.
+        occupation: work.occupation || null,
+        industry: ind.industry || null,
+        expected_salary: salary.expected_salary || null,
+        education: extra.educational_attainment || null,
+        region: p.region || null,
+        barangay: p.barangay || null,
         full_name: titleCase(`${p.first_name} ${p.last_name}`),
         email: p.email,
         phone: p.mobile,
@@ -129,13 +139,21 @@ export async function loginWithExchangeCode(exchangeCode, onStatus = () => {}) {
     const { data: existing } = await supabase
         .from('users').select('id').eq('egov_uniqid', profile.uniqid).maybeSingle();
 
+    // Rich socio-economic columns may not exist yet in an un-migrated DB —
+    // retry without them rather than failing the login.
+    const RICH_FIELDS = ['occupation', 'industry', 'expected_salary', 'education', 'region', 'barangay'];
+    const baseMapped = Object.fromEntries(Object.entries(mapped).filter(([k]) => !RICH_FIELDS.includes(k)));
+
     let userId;
     if (existing) {
         userId = existing.id;
-        await supabase.from('users').update(mapped).eq('id', userId);
+        const { error } = await supabase.from('users').update(mapped).eq('id', userId);
+        if (error) await supabase.from('users').update(baseMapped).eq('id', userId);
     } else {
-        const { data: created, error } = await supabase
+        let { data: created, error } = await supabase
             .from('users').insert(mapped).select('id').single();
+        if (error) ({ data: created, error } = await supabase
+            .from('users').insert(baseMapped).select('id').single());
         if (error) throw new Error(`Could not create your account: ${error.message}`);
         userId = created.id;
         await seedDefaultsForNewUser(userId, profile);
